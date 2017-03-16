@@ -1,0 +1,13 @@
+f510c8c2229ffcae7a7e7225ffd76db5 *DESCRIPTION
+0e784c0cf26e8c1ae269e7196c171e96 *NAMESPACE
+a1b83bd5ba67991f13655d46e7b7a4da *R/RcppExports.R
+5f0f6f5267c5f5d59014d0295be4aea7 *R/blpFunctions.R
+3b1b98b06dd8ec431c992d685d96c17f *R/generics.R
+d1fffde16294091fd2e23b1fefcb96cf *R/get.BLP.dataset.R
+88958d9f9cc206087df2a9a410bd2288 *R/helperFunctions.R
+1bdeb214cf30c304c1b04b09b0ece7cd *man/BLPestimatoR-package.Rd
+137e1aef15a25425a0adeb55ca0393ba *man/estimateBLP.Rd
+ef2df674c7252deae42da11e130ae149 *man/get.BLP.dataset.Rd
+4fcb07369098663f0c26a8213a71a089 *src/BLPestimatoR_init.c
+b727f1c7835d1b9e99ac63e0f04eff1e *src/RcppExports.cpp
+a7a881a6dcf08de8330c67d84246b799 *src/cppFunctions.cpp
