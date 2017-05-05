@@ -176,7 +176,7 @@ estimateBLP <- function(Xlin, Xexo, Xrandom, instruments, demographics,
               toBeTested<- list("Xlin" = Xlin,
                                 "Xexo" = Xexo,
                                 "Xrandom"= Xrandom,
-                                "instruments" = instruments,
+                               # "instruments" = instruments, # Update 04/06/17 : iv are not necessary to specify anymore
                                 "shares" = shares,
                                 "cdid" = cdid,
                                 "productData" = productData,
@@ -187,6 +187,15 @@ estimateBLP <- function(Xlin, Xexo, Xrandom, instruments, demographics,
               if( missing(integration.control) ) integration.control<- list()
               if( missing(postEstimation.control) ) postEstimation.control<- list()
 
+              if( missing(instruments) ) {
+                cat("No IV's are in use...")
+                names_productData_before<- names( productData )
+
+                instruments<- "NoIVs"
+                productData<- cbind(productData, 10000) # assign some numeric value to pass all the input tests
+
+                colnames(productData)<- c(names_productData_before, instruments)
+                }
 
           # data format productData
               productData <- try( as.data.frame( productData ))
@@ -378,6 +387,7 @@ estimateBLP <- function(Xlin, Xexo, Xrandom, instruments, demographics,
                   solver.control$maxit<- NULL
                   solver.control$reltol<- NULL
                   solver.control$solver.maxit<- NULL
+                  solver.control$solver.reltol<- NULL
 
                   solver.control <- c(solver.control,
                                       "maxeval" = solver.maxit,
@@ -397,6 +407,7 @@ estimateBLP <- function(Xlin, Xexo, Xrandom, instruments, demographics,
                     solver.control$maxeval<- NULL
                     solver.control$grtol<- NULL
                     solver.control$solver.maxit<- NULL
+                    solver.control$solver.reltol<- NULL
 
                     solver.control <- c(solver.control,
                                         "maxit" = solver.maxit,
@@ -550,6 +561,10 @@ estimateBLP <- function(Xlin, Xexo, Xrandom, instruments, demographics,
         Xrandom.data <- vapply(Xrandom, function(x) get(x, productData), numeric(nobs))
         share.data <- get(shares, productData)
         iv.data <- vapply(instruments, function(x) get(x, productData), numeric(nobs))
+
+        if( colnames(iv.data)[1]=="NoIVs" ){
+          iv.data<- c()
+        }
 
         Z <- cbind(Xexo.data, iv.data)  #all Instruments (labeled IV in Nevos' Code)
 
@@ -1318,27 +1333,42 @@ get.gmm.gr <- function(theta2 ,
   bracket <- matrix(NA_real_, nrow = numProdt, ncol = amountNodes)
   scalar <- matrix(NA_real_, nrow = numProdt, ncol = amountNodes)
 
-  for (i in 1:K) {
-    # Random Coefficient k
+  for (i in 1:K) {  # i iterates over Random Coefficients describing unobs. het.
+
+    coef_for_i <- blp.parameters$indices[ ,1] == i # coefficients that belong to i (RC and demographics) are in line k of the parameter indices matrix
+
+    with_unobs_het_i <- 1 %in% blp.parameters$indices[ coef_for_i, 2 ] # check if RC for unobs. het. is not NA (if so, there is no 1 as a col index)
+
+    # the following 2 lines are needed anyway (even if RC for unobs. het = NA)
     sumterm[ ] <- t(xt[, i, drop = F]) %*% sijt  # sum over x_mt^k * s_mti (m=product)  for every person i (in cols)
     bracket[ , ] <- xt[, i] - matrix(sumterm, nrow = 1)[rep(1, numProdt), ]  # for a given k: substract that sum from a product characteristic (for every person i)
-    scalar[ , ] <- qvt[rep(1, numProdt), ((i - 1) * amountNodes +
-                                              1):(i * amountNodes)] * sijt # calc draw_i*s_jti  for every person i (in cols)
-    dsdtheta.out[, i] <- (scalar * bracket) %*% weightsMat
+
+    if( with_unobs_het_i ){
+        scalar[ , ] <- qvt[rep(1, numProdt), ((i - 1) * amountNodes +
+                                                1):(i * amountNodes)] * sijt # calc draw_i*s_jti  for every person i (in cols)
+        RCRow <- which( coef_for_i )[1] # first element decribes unobserved heterogeneity
+        dsdtheta.out[, RCRow ] <- (scalar * bracket) %*% weightsMat
+    }
 
     # Demographics (all interactions with Random Coefficient k)
     if( total.demogr > 0 ){
-    demographicsInd <- blp.parameters$indices[ ,1] == i # coefficients that belong to k (RC and demographics) are in line i of the parameter matrix
-    demographicsIndWhich <- which( demographicsInd )[-1] # first one is always for RC
-    relevantDemographicsForK <- blp.parameters$indices[ demographicsInd, 2][-1] - 1 # Dem starts in sec. col
 
-    for ( j in 1: length(demographicsIndWhich) ) {
-    # sumterm and bracket can be used from former loop
-      relevantDemographic <- relevantDemographicsForK[j]
-      scalar[, ] <- dt[rep(1, numProdt), ((relevantDemographic - 1) * amountNodes + 1):
-                            (relevantDemographic * amountNodes)] * sijt  # calc draw_i*s_jti  for every person i (in cols)
-      dsdtheta.out[, demographicsIndWhich[j] ] <- (scalar * bracket) %*% weightsMat
-    }}
+        if( with_unobs_het_i ){ # check if RC for unobs. het. is not NA (if so, there is no 1 as a col index)
+            demographicsRow <- which( coef_for_i )[-1] # first one is for unobs. het.
+        }else{
+          demographicsRow <- which( coef_for_i )
+        }
+
+        relevantDemographicsForI <- blp.parameters$indices[ demographicsRow, 2] - 1 # Dem starts in sec. col (always)
+        if( length( relevantDemographicsForI ) >= 1 ){
+          for ( j in 1: length( relevantDemographicsForI ) ) {
+          # sumterm and bracket can be used from former loop
+            relevantDemographic <- relevantDemographicsForI[j]
+            scalar[, ] <- dt[rep(1, numProdt), ((relevantDemographic - 1) * amountNodes + 1):
+                                  (relevantDemographic * amountNodes)] * sijt  # calc draw_i*s_jti  for every person i (in cols)
+            dsdtheta.out[, demographicsRow[j] ] <- (scalar * bracket) %*% weightsMat
+          }}
+        }
   }
   return(dsdtheta.out)
 }
