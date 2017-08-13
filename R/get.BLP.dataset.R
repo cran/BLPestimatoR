@@ -166,9 +166,9 @@ get.BLP.dataset <- function( nmkt, nbrn,
       expmu <- getExpMu(theta2.matrix, integration.list$nodes,
           Xrandom.data, cdid, demographics = matrix(NA))
 
-      sij <- getSijMod(expmu,
-                       deltatrue.exp,
-                       cdindex ) * deltatrue.exp
+      sij <- getSij(expmu,
+                    deltatrue.exp,
+                    cdindex)
 
       shares <- c(sij %*% matrix(integration.list$weights))
 

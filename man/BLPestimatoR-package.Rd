@@ -13,8 +13,8 @@
   \tabular{ll}{
     Package: \tab BLPestimatoR\cr
     Type: \tab Package\cr
-    Version: \tab 0.1.4\cr
-    Date: \tab 2017-05-05\cr
+    Version: \tab 0.1.5\cr
+    Date: \tab 2017-08-12\cr
     License: \tab GPL-3\cr
   }
 }

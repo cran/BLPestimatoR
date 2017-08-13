@@ -1051,7 +1051,7 @@ get.gmm.obj <- function(theta2 ,
         if ( blp.parameters$gradientIndicator ) {
           sij <- matrix(NA_real_, nrow = blp.parameters$nobs , ncol = blp.integration$amountNodes )
           # init tmp3 ?
-          sij[ , ] <- tmp$sijMod * exp(delta)
+          sij[ , ] <- tmp$sij
           jacobian <- get.jacob(sij = sij,
                             blp.data = blp.data,
                             blp.parameters = blp.parameters,
