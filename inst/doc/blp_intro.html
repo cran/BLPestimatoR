@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Daniel Brunner" />
+
+<meta name="date" content="2018-08-16" />
+
+<title>BLPestimatoR - Package for Demand Estimation</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">BLPestimatoR - Package for Demand Estimation</h1>
+<h4 class="author"><em>Daniel Brunner</em></h4>
+<h4 class="date"><em>2018-08-16</em></h4>
+
+
+
+<div id="intro" class="section level1">
+<h1>Intro</h1>
+<p><code>BLPestimatoR</code> provides an efficient estimation algorithm to perform the demand estimation described in <span class="citation">Berry, Levinsohn, and Pakes (1995)</span>. The routine uses analytic gradients and offers a large number of optimization routines and implemented integration methods as discussed in <span class="citation">Brunner et al. (2017)</span>.</p>
+<p>This extended documentation demonstrates the steps of a typical demand estimation with the package:</p>
+<ul>
+<li>prepare the data with <code>BLP_data</code> (includes the specification of a model and providing integration draws for observed or unobserved heterogeneity)</li>
+<li>estimate the parameters with <code>estimate_BLP</code></li>
+<li>showing the results with <code>summary</code></li>
+<li>view the own- and crosspriceelasticities with <code>get_elasticities</code></li>
+</ul>
+<p>The use of the algorithm’s building blocks is explained as well. The well-known training data for the cereal market from <span class="citation">Nevo (2001)</span> is used for demonstration purposes.</p>
+</div>
+<div id="data" class="section level1">
+<h1>Data</h1>
+<div id="model" class="section level2">
+<h2>Model</h2>
+<p>Since version 0.1.6 the model is provided in R’s formula syntax and consists of five parts. The variable to be explained is given by observed market shares. Explanatory variables are grouped into four (possibly overlapping) categories separated by <code>|</code>:</p>
+<ul>
+<li>linear variables</li>
+<li>exogenous variables</li>
+<li>random coefficients</li>
+<li>instruments</li>
+</ul>
+<p>Nevo’s model can be translated into the following formula syntax:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(BLPestimatoR)
+
+nevos_model &lt;-<span class="st"> </span><span class="kw">as.formula</span>(<span class="st">&quot;share ~  price + productdummy |</span>
+<span class="st">    0+ productdummy |</span>
+<span class="st">    price + sugar + mushy |</span>
+<span class="st">    0+ IV1 + IV2 + IV3 + IV4 + IV5 + IV6 + IV7 + IV8 + IV9 + IV10 + </span>
+<span class="st">    IV11 + IV12 + IV13 + IV14 + IV15 + IV16 + IV17 + IV18 + IV19 + IV20&quot;</span>)</code></pre></div>
+<p>The model is directly related to consumer <span class="math inline">\(i\)</span>’s indirect utility from purchasing cereal <span class="math inline">\(j\)</span> in market <span class="math inline">\(t\)</span>:</p>
+<p><span class="math display">\[u_{ijt}=\sum_{m=1}^M x^{(m)}_{jt} \beta_{i,m}+\xi_{jt}+\epsilon_{ijt} \;\; \text{with}\]</span> <span class="math display">\[\beta_{i,m}= \bar{\beta}_m  + \sum_{r=1}^R  \gamma_{m,r} d_{i,r}  +  \sigma_m \nu_{i,m}\]</span> and</p>
+<ul>
+<li>M = 4 random coefficients (<code>price</code>, <code>sugar</code>, <code>mushy</code> and an intercept)</li>
+<li>R = 4 demographics (<code>income</code>, <code>incomesq</code>, <code>age</code>, <code>child</code>)</li>
+<li>and the set of non-linear parameters to estimate:</li>
+</ul>
+<p><span class="math display">\[\theta_2 = 
+\begin{pmatrix}
+\sigma_1 &amp; \gamma_{1,1} &amp; \cdots &amp; \gamma_{1,R} \\
+\sigma_2 &amp; \gamma_{2,1} &amp; \cdots &amp; \gamma_{2,R} \\
+\vdots &amp; \vdots &amp;  \ddots &amp; \vdots \\
+\sigma_M &amp; \gamma_{M,1} &amp; \cdots &amp; \gamma_{M,R}
+\end{pmatrix}\]</span></p>
+</div>
+<div id="dataframe" class="section level2">
+<h2>Dataframe</h2>
+<p>Product related variables are collected in the dataframe <code>productData</code> with the following requirements:</p>
+<ul>
+<li>missings are not allowed</li>
+<li>character variables are automatically transformed to a set of dummy variables</li>
+<li>a variable that describes market affiliation (<code>market_identifier</code>)</li>
+</ul>
+<p>A variable that uniquely identifies a product in a market (<code>product_identifier</code>) is optional, but enhances clarity (interpreting elasticities, for example, is much easier). <code>market_identifier</code> and <code>product_identifier</code> together uniquely identify an observation, which is used by the function <code>update_BLP_data</code> to update any variable in the data (in this case <code>product_identifier</code> is mandatory).</p>
+<p>In the cereal example, this gives the following dataframe:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(productData)
+<span class="co">#&gt;        price const sugar mushy       share     cdid        IV1        IV2</span>
+<span class="co">#&gt; 1 0.07208794     1     2     1 0.012417212 market_1 -0.2159728 0.04057341</span>
+<span class="co">#&gt; 2 0.11417849     1    18     1 0.007809387 market_1 -0.2452393 0.05474226</span>
+<span class="co">#&gt; 3 0.13239066     1     4     1 0.012994511 market_1 -0.1764587 0.04659597</span>
+<span class="co">#&gt; 4 0.13034408     1     3     0 0.005769961 market_1 -0.1214013 0.04876037</span>
+<span class="co">#&gt; 5 0.15482331     1    12     0 0.017934141 market_1 -0.1326114 0.03962835</span>
+<span class="co">#&gt; 6 0.13704921     1    14     0 0.026601892 market_1 -0.1534998 0.04298842</span>
+<span class="co">#&gt;          IV3          IV4         IV5           IV6        IV7         IV8</span>
+<span class="co">#&gt; 1  -3.247948 -0.523937695 -0.23246005  0.0068326605  3.1397395 -0.57478633</span>
+<span class="co">#&gt; 2 -19.832461 -0.180519694  0.01468859  0.0007988026  0.2876539  0.03293960</span>
+<span class="co">#&gt; 3  -2.878531 -0.284219004 -0.21553691 -0.0318693281  2.8862741 -0.74976495</span>
+<span class="co">#&gt; 4  -2.059918 -0.328412257 -0.22206995 -0.0314740402  4.4531096  0.25567529</span>
+<span class="co">#&gt; 5  -6.137598 -0.138625095 -0.18936521 -0.0437471023 -3.5546508  0.13882114</span>
+<span class="co">#&gt; 6  -8.417332  0.007829087 -0.13850121 -0.0210582272 -2.7594799  0.05020052</span>
+<span class="co">#&gt;          IV9       IV10       IV11        IV12          IV13       IV14</span>
+<span class="co">#&gt; 1  0.2062202  0.1774656  2.1163580 -0.15470824 -0.0057964065 0.01453802</span>
+<span class="co">#&gt; 2  0.1051208 -0.2875618 -7.3740909 -0.57641176  0.0129908544 0.07614324</span>
+<span class="co">#&gt; 3 -0.4789565  0.2147389  2.1878721 -0.20734643  0.0035092777 0.09178117</span>
+<span class="co">#&gt; 4 -0.4729673  0.3560980  2.7045762  0.04074801 -0.0037242656 0.09473168</span>
+<span class="co">#&gt; 5 -0.6886784  0.2602726  1.2612419  0.03483558 -0.0005676374 0.10245147</span>
+<span class="co">#&gt; 6 -0.2734440  0.1273060  0.3375543  0.02351037  0.0002637777 0.08627983</span>
+<span class="co">#&gt;         IV15       IV16       IV17       IV18       IV19       IV20</span>
+<span class="co">#&gt; 1 0.12624398 0.06734464 0.06842261 0.03480046 0.12634612 0.03548368</span>
+<span class="co">#&gt; 2 0.02973565 0.08786672 0.11050060 0.08778380 0.04987192 0.07257905</span>
+<span class="co">#&gt; 3 0.16377308 0.11188073 0.10822551 0.08643905 0.12234707 0.10184248</span>
+<span class="co">#&gt; 4 0.13527378 0.08809001 0.10176745 0.10177748 0.11074119 0.10433204</span>
+<span class="co">#&gt; 5 0.13063951 0.08481820 0.10107461 0.12516923 0.13346381 0.12111110</span>
+<span class="co">#&gt; 6 0.07233581 0.02225051 0.10564387 0.11603699 0.09965063 0.10572660</span>
+<span class="co">#&gt;   product_id productdummy</span>
+<span class="co">#&gt; 1   cereal_1     product1</span>
+<span class="co">#&gt; 2   cereal_2     product2</span>
+<span class="co">#&gt; 3   cereal_3     product3</span>
+<span class="co">#&gt; 4   cereal_4     product4</span>
+<span class="co">#&gt; 5   cereal_5     product5</span>
+<span class="co">#&gt; 6   cereal_6     product6</span></code></pre></div>
+</div>
+<div id="integration-draws" class="section level2">
+<h2>Integration Draws</h2>
+<p>The arguments related to the numerical integration problem are of particular importance when providing own integration draws and weights, which is most relevant for observed heterogeneity (for unobserved heterogeneity, the straightforward approach is the use of automatic integration).</p>
+<p>In the cereal data, both, observed and unobserved heterogeneity, is used for the random coefficients. Starting with observed heterogeneity, user provided draws are collected in a list. Each list entry must be named according to the name of a demographic. Each entry contains the following variables:</p>
+<ul>
+<li>a variable <code>market_identifier</code> that matches each line to a market (same variable name as in <code>productData</code>)</li>
+<li>integration draws for each market</li>
+</ul>
+<p>In the cereal example, observed heterogeneity is provided as follows (list names correspond to the demographics):</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">demographicData<span class="op">$</span>income[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]
+<span class="co">#&gt;       cdid     draw_1     draw_2     draw_3      draw_4</span>
+<span class="co">#&gt; 1 market_1 0.49512349  0.3787622  0.1050146 -1.48548093</span>
+<span class="co">#&gt; 2 market_2 0.05389113 -1.5030833  0.6217917  0.26922901</span>
+<span class="co">#&gt; 3 market_3 0.62459788 -0.2242698 -0.2846169  0.67845943</span>
+<span class="co">#&gt; 4 market_4 0.94419851  0.4056359  0.5859923  0.01813051</span>
+
+demographicData<span class="op">$</span>incomesq[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]
+<span class="co">#&gt;       cdid     draw_1     draw_2    draw_3      draw_4</span>
+<span class="co">#&gt; 1 market_1  8.3313042   6.121865  1.030803 -25.5836047</span>
+<span class="co">#&gt; 2 market_2  0.0966346 -25.849845 10.767233   4.0668173</span>
+<span class="co">#&gt; 3 market_3 10.8215619  -4.894545 -5.956954  11.8673879</span>
+<span class="co">#&gt; 4 market_4 17.1121550   6.629730 10.075529  -0.5537043</span>
+
+demographicData<span class="op">$</span>age[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]
+<span class="co">#&gt;       cdid     draw_1     draw_2       draw_3     draw_4</span>
+<span class="co">#&gt; 1 market_1 -0.2301090 -2.5326941 -0.006965458 -0.8279460</span>
+<span class="co">#&gt; 2 market_2  0.1414545 -0.1813188 -1.279931134 -0.4532526</span>
+<span class="co">#&gt; 3 market_3 -0.1813188 -0.5867840  0.208145922 -0.4532526</span>
+<span class="co">#&gt; 4 market_4  0.7444506  0.1414545  0.645359728  0.8346017</span>
+
+demographicData<span class="op">$</span>child[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]
+<span class="co">#&gt;       cdid     draw_1     draw_2     draw_3     draw_4</span>
+<span class="co">#&gt; 1 market_1 -0.2308511  0.7691489 -0.2308511  0.7691489</span>
+<span class="co">#&gt; 2 market_2 -0.2308511 -0.2308511  0.7691489 -0.2308511</span>
+<span class="co">#&gt; 3 market_3 -0.2308511  0.7691489 -0.2308511 -0.2308511</span>
+<span class="co">#&gt; 4 market_4 -0.2308511 -0.2308511 -0.2308511 -0.2308511</span></code></pre></div>
+<p>If demographic input (<code>demographicData</code>) is missing, the estimation routine considers only coefficients for unobserved heterogeneity. This can be done by already implemented integration methods via <code>integration_method</code> as shown in the estimation section. In Nevo’s cereal example however, a specific set of 20 draws is given. For this situation, draws are also provided as a list (list names correspond to the formula’s random coefficients and each list entry has a variable <code>market_identifier</code>):</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">originalDraws<span class="op">$</span>constant[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]
+<span class="co">#&gt;       cdid       draw_1     draw_2     draw_3      draw_4</span>
+<span class="co">#&gt; 1 market_1  0.434100553 -0.7266491 -0.6230607 -0.04131699</span>
+<span class="co">#&gt; 2 market_2  0.001702598  0.2228245 -1.0287201  0.38312476</span>
+<span class="co">#&gt; 3 market_3 -0.529569305  0.7248712  0.2910167 -1.39164253</span>
+<span class="co">#&gt; 4 market_4  0.019233489 -1.4250308 -0.2678170 -2.26541236</span>
+
+<span class="co"># renaming constants:</span>
+<span class="kw">names</span>(originalDraws)[<span class="dv">1</span>] &lt;-<span class="st"> &quot;(Intercept)&quot;</span>
+
+originalDraws<span class="op">$</span>price[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]
+<span class="co">#&gt;       cdid     draw_1     draw_2     draw_3     draw_4</span>
+<span class="co">#&gt; 1 market_1 -1.5008378  0.1331817 -0.1382405  1.2571357</span>
+<span class="co">#&gt; 2 market_2  0.0276477 -0.8414414 -0.9056861 -2.0306179</span>
+<span class="co">#&gt; 3 market_3 -0.4768085 -0.9348689  1.4300456  2.6188581</span>
+<span class="co">#&gt; 4 market_4  0.5396019  0.1698178  0.7128376 -0.1216309</span>
+
+originalDraws<span class="op">$</span>sugar[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]
+<span class="co">#&gt;       cdid     draw_1     draw_2     draw_3     draw_4</span>
+<span class="co">#&gt; 1 market_1 -1.1510786 -0.5007498  0.7974412 -0.6830540</span>
+<span class="co">#&gt; 2 market_2  1.0451218  1.0170277  2.3012550  0.1490338</span>
+<span class="co">#&gt; 3 market_3 -1.0187809  0.3107185 -0.9531532  0.8057080</span>
+<span class="co">#&gt; 4 market_4 -0.5760582 -0.5072059 -0.7496653  1.1163544</span>
+
+originalDraws<span class="op">$</span>mushy[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]
+<span class="co">#&gt;       cdid     draw_1     draw_2      draw_3     draw_4</span>
+<span class="co">#&gt; 1 market_1 0.16101681  0.1297316 -0.79554915  0.2590437</span>
+<span class="co">#&gt; 2 market_2 0.23595798  0.1345995  0.07284586  0.9509871</span>
+<span class="co">#&gt; 3 market_3 0.02922435 -0.1704289  0.36395246  0.4879702</span>
+<span class="co">#&gt; 4 market_4 1.27701102  0.4284194  0.46124654 -1.0110437</span></code></pre></div>
+<p>As demonstrated above, list entries for draws of constants <strong>must</strong> be named <code>(Intercept)</code>. Other names of list entries must match the random coefficients specified in the formula.</p>
+</div>
+<div id="calling-blp_data" class="section level2">
+<h2>Calling BLP_data</h2>
+<p>Calling <code>BLP_data</code> structures and prepares the data for estimation and creates the data object:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">productData<span class="op">$</span>startingGuessesDelta  &lt;-<span class="st"> </span><span class="kw">c</span>( <span class="kw">log</span>(w_guesses)) <span class="co"># include orig. draws in the product data</span>
+
+nevo_data &lt;-<span class="st"> </span><span class="kw">BLP_data</span>(<span class="dt">model =</span> nevos_model,
+                      <span class="dt">market_identifier=</span><span class="st">&quot;cdid&quot;</span>,
+                      <span class="dt">par_delta =</span> <span class="st">&quot;startingGuessesDelta&quot;</span>,
+                      <span class="dt">product_identifier =</span> <span class="st">&quot;product_id&quot;</span>,
+                      <span class="dt">productData =</span> productData,
+                      <span class="dt">demographic_draws =</span> demographicData,
+                      <span class="dt">blp_inner_tol =</span> <span class="fl">1e-6</span>, <span class="dt">blp_inner_maxit =</span> <span class="dv">5000</span>,
+                      <span class="dt">integration_draws =</span> originalDraws, 
+                      <span class="dt">integration_weights=</span> <span class="kw">rep</span>(<span class="dv">1</span><span class="op">/</span><span class="dv">20</span>,<span class="dv">20</span>))</code></pre></div>
+<p>The arguments in greater detail:</p>
+<ul>
+<li><p><code>model</code> provides the utility model as explained above</p></li>
+<li><p><code>market_identifier</code> gives the name of the variable in <code>productData</code> that matches each observation to a market</p></li>
+<li><p><code>product_identifier</code> gives the name of the variable in <code>productData</code> that matches each observation to a product (should be unique in a market)</p></li>
+<li><p><code>productData</code> is given as a dataframe and <code>demographicData</code> as a list as described above</p></li>
+<li><p><code>par_delta</code> gives the name of the variable in <code>productData</code> for mean utilities</p></li>
+<li><p><code>blp_inner_tol</code> , <code>blp_inner_maxit</code>: arguments related to be BLP algorithm include the convergence threshold and the maximum number of iterations in the contraction mapping</p></li>
+<li><p>if integration draws are provided manually, <code>integration_draws</code> and <code>integration_weights</code> need to be specified</p></li>
+<li><p>for automatic integration the user specifies <code>integration_method</code>, for example <code>integration_method= &quot;MLHS&quot;</code>, and the accuracy of the integration method by <code>integration_accuracy</code> (for stochastic integration methods this equals the number of draws)</p></li>
+</ul>
+<p>If you decide to update your data later, you can use the function <code>update_BLP_data</code>.</p>
+</div>
+</div>
+<div id="estimation" class="section level1">
+<h1>Estimation</h1>
+<div id="starting-guesses" class="section level2">
+<h2>Starting guesses</h2>
+<p>The provided set of starting guesses <code>par_theta2</code> is matched with formula input and demographic data:</p>
+<ul>
+<li>rownames of <code>par_theta2</code> must match with the random coefficients specified in the formula (note: constants <strong>must</strong> be named <code>(Intercept)</code> )</li>
+<li>colnames of <code>par_theta2</code> must match with list entry names of <code>demographicData</code> and a column for unobserved heterogeneity (<strong>must</strong> be named `unobs_sd)</li>
+<li><code>NA</code>s in <code>par_theta2</code> indicate the exclusion from estimation, i.e. the coefficient is assumed to be zero.</li>
+</ul>
+<p>These requirements are demonstrated with Nevo’s starting guesses:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#before:</span>
+theta_guesses
+<span class="co">#&gt;        [,1]    [,2] [,3]    [,4]   [,5]</span>
+<span class="co">#&gt; [1,] 0.3302  5.4819  0.0  0.2037 0.0000</span>
+<span class="co">#&gt; [2,] 2.4526 15.8935 -1.2  0.0000 2.6342</span>
+<span class="co">#&gt; [3,] 0.0163 -0.2506  0.0  0.0511 0.0000</span>
+<span class="co">#&gt; [4,] 0.2441  1.2650  0.0 -0.8091 0.0000</span>
+theta_guesses[theta_guesses<span class="op">==</span><span class="dv">0</span>] &lt;-<span class="st"> </span><span class="ot">NA</span> 
+<span class="kw">colnames</span>(theta_guesses) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;unobs_sd&quot;</span>, <span class="st">&quot;income&quot;</span>, <span class="st">&quot;incomesq&quot;</span>, <span class="st">&quot;age&quot;</span>, <span class="st">&quot;child&quot;</span> )
+<span class="kw">rownames</span>(theta_guesses) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;(Intercept)&quot;</span>, <span class="st">&quot;price&quot;</span> , <span class="st">&quot;sugar&quot;</span>, <span class="st">&quot;mushy&quot;</span>)
+
+<span class="co"># correctly named:</span>
+theta_guesses
+<span class="co">#&gt;             unobs_sd  income incomesq     age  child</span>
+<span class="co">#&gt; (Intercept)   0.3302  5.4819       NA  0.2037     NA</span>
+<span class="co">#&gt; price         2.4526 15.8935     -1.2      NA 2.6342</span>
+<span class="co">#&gt; sugar         0.0163 -0.2506       NA  0.0511     NA</span>
+<span class="co">#&gt; mushy         0.2441  1.2650       NA -0.8091     NA</span></code></pre></div>
+</div>
+<div id="calling-estimateblp" class="section level2">
+<h2>Calling estimateBLP</h2>
+<p>The following code performs the demand estimation:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+blp_est &lt;-<span class="st"> </span><span class="kw">estimateBLP</span>( <span class="dt">blp_data=</span>nevo_data,
+                        <span class="dt">par_theta2 =</span> theta_guesses,
+                        <span class="dt">solver_method =</span> <span class="st">&quot;BFGS&quot;</span>, <span class="dt">solver_maxit =</span> <span class="dv">1000</span>, <span class="dt">solver_reltol =</span> <span class="fl">1e-6</span>,
+                        <span class="dt">standardError =</span> <span class="st">&quot;heteroskedastic&quot;</span>,
+                        <span class="dt">extremumCheck =</span> <span class="ot">FALSE</span> ,
+                        <span class="dt">printLevel =</span> <span class="dv">1</span> )
+<span class="co">#&gt; blp_data were prepared with the following arguments:</span>
+<span class="co">#&gt; BLP_data(model = nevos_model, market_identifier = &quot;cdid&quot;, product_identifier = &quot;product_id&quot;, </span>
+<span class="co">#&gt;     par_delta = &quot;startingGuessesDelta&quot;, productData = productData, </span>
+<span class="co">#&gt;     demographic_draws = demographicData, integration_draws = originalDraws, </span>
+<span class="co">#&gt;     integration_weights = rep(1/20, 20), blp_inner_tol = 1e-06, </span>
+<span class="co">#&gt;     blp_inner_maxit = 5000)</span>
+<span class="co">#&gt; Starting a BLP demand estimation with  2256  observations in  94  markets...</span>
+<span class="co">#&gt; [integration::method  integration::amountDraws 20 ]</span>
+<span class="co">#&gt; [blp::inner_tol 1e-06  blp::inner_maxit 5000 ]</span>
+<span class="co">#&gt; [solver::method BFGS  solver::maxit 1000  solver::reltol 1e-06 ]</span>
+<span class="co">#&gt; gmm objective: 29.3522</span>
+<span class="co">#&gt; gmm objective: Inf [delta contains NaN's] </span>
+<span class="co">#&gt; gmm objective: Inf [delta contains NaN's] </span>
+<span class="co">#&gt; gmm objective: Inf [delta contains NaN's] </span>
+<span class="co">#&gt; gmm objective: 22451.18</span>
+<span class="co">#&gt; gmm objective: 775.9515</span>
+<span class="co">#&gt; gmm objective: 71.6209</span>
+<span class="co">#&gt; gmm objective: 26.8851</span>
+<span class="co">#&gt; gmm objective: Inf [delta contains NaN's] </span>
+<span class="co">#&gt; gmm objective: 330914</span>
+<span class="co">#&gt; gmm objective: 12694.84</span>
+<span class="co">#&gt; gmm objective: 311.8842</span>
+<span class="co">#&gt; gmm objective: 38.2627</span>
+<span class="co">#&gt; gmm objective: 26.9935</span>
+<span class="co">#&gt; gmm objective: 26.8196</span>
+<span class="co">#&gt; gmm objective: 40772.63</span>
+<span class="co">#&gt; gmm objective: 1186.144</span>
+<span class="co">#&gt; gmm objective: 103.4133</span>
+<span class="co">#&gt; gmm objective: 27.9556</span>
+<span class="co">#&gt; gmm objective: 26.1524</span>
+<span class="co">#&gt; gmm objective: Inf [delta contains NaN's] </span>
+<span class="co">#&gt; gmm objective: Inf [delta contains NaN's] </span>
+<span class="co">#&gt; gmm objective: 28234.6</span>
+<span class="co">#&gt; gmm objective: 756.8709</span>
+<span class="co">#&gt; gmm objective: 37.7704</span>
+<span class="co">#&gt; gmm objective: 24.7211</span>
+<span class="co">#&gt; gmm objective: 5772.739</span>
+<span class="co">#&gt; gmm objective: 202.5456</span>
+<span class="co">#&gt; gmm objective: 27.2616</span>
+<span class="co">#&gt; gmm objective: 23.9898</span>
+<span class="co">#&gt; gmm objective: 838.469</span>
+<span class="co">#&gt; gmm objective: 32.1783</span>
+<span class="co">#&gt; gmm objective: 21.9662</span>
+<span class="co">#&gt; gmm objective: 23912.56</span>
+<span class="co">#&gt; gmm objective: 244.3514</span>
+<span class="co">#&gt; gmm objective: 20.9664</span>
+<span class="co">#&gt; gmm objective: 1417.216</span>
+<span class="co">#&gt; gmm objective: 56.3625</span>
+<span class="co">#&gt; gmm objective: 21.2928</span>
+<span class="co">#&gt; gmm objective: 20.6459</span>
+<span class="co">#&gt; gmm objective: 24.7031</span>
+<span class="co">#&gt; gmm objective: 19.3915</span>
+<span class="co">#&gt; gmm objective: 192.3949</span>
+<span class="co">#&gt; gmm objective: 18.8625</span>
+<span class="co">#&gt; gmm objective: 20.5334</span>
+<span class="co">#&gt; gmm objective: 17.7234</span>
+<span class="co">#&gt; gmm objective: 16.7846</span>
+<span class="co">#&gt; gmm objective: 16.4664</span>
+<span class="co">#&gt; gmm objective: 15.9588</span>
+<span class="co">#&gt; gmm objective: 15.0231</span>
+<span class="co">#&gt; gmm objective: 14.9101</span>
+<span class="co">#&gt; gmm objective: 14.8987</span>
+<span class="co">#&gt; gmm objective: 14.8961</span>
+<span class="co">#&gt; gmm objective: 14.8902</span>
+<span class="co">#&gt; gmm objective: 14.8788</span>
+<span class="co">#&gt; gmm objective: 14.8479</span>
+<span class="co">#&gt; gmm objective: 14.7731</span>
+<span class="co">#&gt; gmm objective: 14.5807</span>
+<span class="co">#&gt; gmm objective: 14.0873</span>
+<span class="co">#&gt; gmm objective: 12.8012</span>
+<span class="co">#&gt; gmm objective: 11.9828</span>
+<span class="co">#&gt; gmm objective: 9.4672</span>
+<span class="co">#&gt; gmm objective: Inf [delta contains NaN's] </span>
+<span class="co">#&gt; gmm objective: Inf [delta contains NaN's] </span>
+<span class="co">#&gt; gmm objective: 150504.2</span>
+<span class="co">#&gt; gmm objective: 6437.658</span>
+<span class="co">#&gt; gmm objective: 224.7393</span>
+<span class="co">#&gt; gmm objective: 13.0643</span>
+<span class="co">#&gt; gmm objective: 9.2023</span>
+<span class="co">#&gt; gmm objective: Inf [delta contains NaN's] </span>
+<span class="co">#&gt; gmm objective: 10140.17</span>
+<span class="co">#&gt; gmm objective: 554.5767</span>
+<span class="co">#&gt; gmm objective: 34.6091</span>
+<span class="co">#&gt; gmm objective: 10.0322</span>
+<span class="co">#&gt; gmm objective: 9.1844</span>
+<span class="co">#&gt; gmm objective: 75730.14</span>
+<span class="co">#&gt; gmm objective: 2145.751</span>
+<span class="co">#&gt; gmm objective: 45.6103</span>
+<span class="co">#&gt; gmm objective: 9.9089</span>
+<span class="co">#&gt; gmm objective: 9.0889</span>
+<span class="co">#&gt; gmm objective: 111102.8</span>
+<span class="co">#&gt; gmm objective: 17852.06</span>
+<span class="co">#&gt; gmm objective: 389.125</span>
+<span class="co">#&gt; gmm objective: 20.1367</span>
+<span class="co">#&gt; gmm objective: 8.7624</span>
+<span class="co">#&gt; gmm objective: 766.0638</span>
+<span class="co">#&gt; gmm objective: 49.5382</span>
+<span class="co">#&gt; gmm objective: 10.0242</span>
+<span class="co">#&gt; gmm objective: 8.6598</span>
+<span class="co">#&gt; gmm objective: 155.1232</span>
+<span class="co">#&gt; gmm objective: 12.3475</span>
+<span class="co">#&gt; gmm objective: 8.5964</span>
+<span class="co">#&gt; gmm objective: 308.36</span>
+<span class="co">#&gt; gmm objective: 10.1499</span>
+<span class="co">#&gt; gmm objective: 8.3448</span>
+<span class="co">#&gt; gmm objective: 1593.047</span>
+<span class="co">#&gt; gmm objective: 18.5902</span>
+<span class="co">#&gt; gmm objective: 7.9521</span>
+<span class="co">#&gt; gmm objective: 24.6953</span>
+<span class="co">#&gt; gmm objective: 7.4967</span>
+<span class="co">#&gt; gmm objective: 7.8465</span>
+<span class="co">#&gt; gmm objective: 7.4219</span>
+<span class="co">#&gt; gmm objective: 7.3411</span>
+<span class="co">#&gt; gmm objective: 7.2325</span>
+<span class="co">#&gt; gmm objective: 7.0497</span>
+<span class="co">#&gt; gmm objective: 6.9818</span>
+<span class="co">#&gt; gmm objective: 6.9711</span>
+<span class="co">#&gt; gmm objective: 6.9695</span>
+<span class="co">#&gt; gmm objective: 6.9696</span>
+<span class="co">#&gt; gmm objective: 6.9692</span>
+<span class="co">#&gt; gmm objective: 6.9633</span>
+<span class="co">#&gt; gmm objective: 6.9462</span>
+<span class="co">#&gt; gmm objective: 6.8986</span>
+<span class="co">#&gt; gmm objective: 6.8301</span>
+<span class="co">#&gt; gmm objective: 6.6517</span>
+<span class="co">#&gt; gmm objective: 6.3046</span>
+<span class="co">#&gt; gmm objective: 5.7187</span>
+<span class="co">#&gt; gmm objective: 5.0274</span>
+<span class="co">#&gt; gmm objective: 4.6491</span>
+<span class="co">#&gt; gmm objective: 4.5752</span>
+<span class="co">#&gt; gmm objective: 54557.62</span>
+<span class="co">#&gt; gmm objective: 2335.286</span>
+<span class="co">#&gt; gmm objective: 90.1735</span>
+<span class="co">#&gt; gmm objective: 7.3992</span>
+<span class="co">#&gt; gmm objective: 4.667</span>
+<span class="co">#&gt; gmm objective: 4.576</span>
+<span class="co">#&gt; gmm objective: 4.575</span>
+<span class="co">#&gt; gmm objective: 14656.41</span>
+<span class="co">#&gt; gmm objective: 601.8347</span>
+<span class="co">#&gt; gmm objective: 32.5354</span>
+<span class="co">#&gt; gmm objective: 5.863</span>
+<span class="co">#&gt; gmm objective: 4.6245</span>
+<span class="co">#&gt; gmm objective: 4.5771</span>
+<span class="co">#&gt; gmm objective: 4.5758</span>
+<span class="co">#&gt; gmm objective: 4.5759</span>
+<span class="co">#&gt; gmm objective: 4.5757</span>
+<span class="co">#&gt; gmm objective: 4.5756</span>
+<span class="co">#&gt; gmm objective: 4.5755</span>
+<span class="co">#&gt; gmm objective: 4.5754</span>
+<span class="co">#&gt; gmm objective: 4.5754</span>
+<span class="co">#&gt; gmm objective: 4.5754</span>
+<span class="co">#&gt; gmm objective: 4.5753</span>
+<span class="co">#&gt; gmm objective: 4.5753</span>
+<span class="co">#&gt; gmm objective: 4.5753</span>
+<span class="co">#&gt; gmm objective: 4.5753</span>
+<span class="co">#&gt; gmm objective: 4.5753</span>
+<span class="co">#&gt; gmm objective: 4.5753</span>
+<span class="co">#&gt; gmm objective: 4.5753</span>
+<span class="co">#&gt; gmm objective: 4.5752</span>
+<span class="co">#&gt; gmm objective: 4.5752</span>
+<span class="co">#&gt; gmm objective: 16969.25</span>
+<span class="co">#&gt; gmm objective: 603.3225</span>
+<span class="co">#&gt; gmm objective: 23.8438</span>
+<span class="co">#&gt; gmm objective: 5.2753</span>
+<span class="co">#&gt; gmm objective: 4.5966</span>
+<span class="co">#&gt; gmm objective: 4.575</span>
+<span class="co">#&gt; gmm objective: 4.5752</span>
+<span class="co">#&gt; gmm objective: 4.5755</span>
+<span class="co">#&gt; gmm objective: 4.5755</span>
+<span class="co">#&gt; gmm objective: 4.5754</span>
+<span class="co">#&gt; gmm objective: 4.5754</span>
+<span class="co">#&gt; gmm objective: 4.5754</span>
+<span class="co">#&gt; gmm objective: 4.5753</span>
+<span class="co">#&gt; gmm objective: 4.5753</span>
+<span class="co">#&gt; gmm objective: 4.5753</span>
+<span class="co">#&gt; gmm objective: 4.5753</span>
+<span class="co">#&gt; gmm objective: 4.5753</span>
+<span class="co">#&gt; gmm objective: 4.5753</span>
+<span class="co">#&gt; gmm objective: 4.5753</span>
+<span class="co">#&gt; gmm objective: 4.5753</span>
+<span class="co">#&gt; gmm objective: 4.5753</span>
+<span class="co">#&gt; gmm objective: 4.5752</span>
+<span class="co">#&gt; gmm objective: 4.5752</span>
+<span class="co">#&gt; ------------------------------------------ </span>
+<span class="co">#&gt; Solver message: Successful convergence </span>
+<span class="co">#&gt; ------------------------------------------ </span>
+<span class="co">#&gt; Final GMM evaluation at optimal parameters: </span>
+<span class="co">#&gt; gmm objective: 4.5744</span>
+<span class="co">#&gt;   theta (RC): 0.55 3.29 -0.01 0.09 </span>
+<span class="co">#&gt;   theta (demogr.): 2.3 577.44 -0.38 0.83 0 -29.63 0 0 1.27 0 0.05 -1.35 0 11.03 0 0 </span>
+<span class="co">#&gt;   inner iterations: 70 </span>
+<span class="co">#&gt;   gradient: -0.0605 0.0017 -0.162 -0.0354 -0.0926 -0.0083 -2.2061 0.2945 -0.1468 0.0797 -1.2189 0.2315 2e-04 </span>
+<span class="co">#&gt; Using the heteroskedastic asymptotic variance-covariance matrix...</span>
+
+<span class="kw">summary</span>(blp_est)
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Data information:</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;   94 market(s) with 2256 products </span>
+<span class="co">#&gt;   25 linear coefficient(s) (24 exogenous coefficients) </span>
+<span class="co">#&gt;   13 non-linear parameters related to random coefficients </span>
+<span class="co">#&gt;   4 demographic variable(s) </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Estimation results:</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;  Linear Coefficients</span>
+<span class="co">#&gt;                          Estimate Std. Error   t value     Pr(&gt;|t|)</span>
+<span class="co">#&gt; (Intercept)            -2.5769264  0.8531569 -3.020460 2.523909e-03</span>
+<span class="co">#&gt; price                 -62.1403350 14.5135858 -4.281529 1.856137e-05</span>
+<span class="co">#&gt; productdummyproduct10   1.9000897  0.6653478  2.855784 4.293071e-03</span>
+<span class="co">#&gt; productdummyproduct11   3.6767952  0.6664428  5.517045 3.447468e-08</span>
+<span class="co">#&gt; productdummyproduct12   0.2615994  0.2287542  1.143583 2.527967e-01</span>
+<span class="co">#&gt; productdummyproduct13   2.3591835  0.2184213 10.801071 3.402135e-27</span>
+<span class="co">#&gt; productdummyproduct14   3.8446786  0.6855662  5.608034 2.046376e-08</span>
+<span class="co">#&gt; productdummyproduct15   4.2873240  0.6779154  6.324276 2.544228e-10</span>
+<span class="co">#&gt; productdummyproduct16   6.0916947  0.6723137  9.060792 1.295068e-19</span>
+<span class="co">#&gt; productdummyproduct17   2.6036321  0.6510521  3.999115 6.357976e-05</span>
+<span class="co">#&gt; productdummyproduct18   1.4324858  0.6079004  2.356448 1.845065e-02</span>
+<span class="co">#&gt; productdummyproduct19   4.3135147  0.6191372  6.966977 3.238237e-12</span>
+<span class="co">#&gt; productdummyproduct2    4.8750516  0.6334282  7.696297 1.400664e-14</span>
+<span class="co">#&gt; productdummyproduct20   4.1706989  0.6075700  6.864557 6.669789e-12</span>
+<span class="co">#&gt; productdummyproduct21   4.9106550  0.6827987  7.191951 6.387201e-13</span>
+<span class="co">#&gt; productdummyproduct22   1.7215961  0.5917418  2.909370 3.621574e-03</span>
+<span class="co">#&gt; productdummyproduct23   3.2960677  0.6839398  4.819237 1.441085e-06</span>
+<span class="co">#&gt; productdummyproduct24   1.8879979  0.7307294  2.583717 9.774202e-03</span>
+<span class="co">#&gt; productdummyproduct3    2.3028803  0.2314068  9.951652 2.480314e-23</span>
+<span class="co">#&gt; productdummyproduct4    1.3668373  0.5940217  2.300989 2.139225e-02</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; ...</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;  5 estimates are omitted. They are available in the LinCoefficients generated by summary.</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;  Random Coefficients</span>
+<span class="co">#&gt;                           Estimate   Std. Error    t value     Pr(&gt;|t|)</span>
+<span class="co">#&gt; unobs_sd*(Intercept)   0.551339802   0.16015070  3.4426313 0.0005760842</span>
+<span class="co">#&gt; unobs_sd*price         3.285559242   1.30636137  2.5150462 0.0119016778</span>
+<span class="co">#&gt; unobs_sd*sugar        -0.005237547   0.01336128 -0.3919943 0.6950624582</span>
+<span class="co">#&gt; unobs_sd*mushy         0.091406886   0.18480221  0.4946201 0.6208683092</span>
+<span class="co">#&gt; income*(Intercept)     2.303677746   1.19131427  1.9337280 0.0531465808</span>
+<span class="co">#&gt; income*price         577.439895043 264.92313045  2.1796507 0.0292833612</span>
+<span class="co">#&gt; income*sugar          -0.384035468   0.11965304 -3.2095755 0.0013293115</span>
+<span class="co">#&gt; income*mushy           0.826450257   0.77955169  1.0601609 0.2890713878</span>
+<span class="co">#&gt; incomesq*price       -29.627526252  13.80993188 -2.1453782 0.0319226238</span>
+<span class="co">#&gt; age*(Intercept)        1.268858974   0.62894244  2.0174485 0.0436487312</span>
+<span class="co">#&gt; age*sugar              0.051714014   0.02546546  2.0307513 0.0422802273</span>
+<span class="co">#&gt; age*mushy             -1.350839886   0.66343728 -2.0361230 0.0417380079</span>
+<span class="co">#&gt; child*price           11.025866514   4.11565257  2.6790081 0.0073840611</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;  Wald Test</span>
+<span class="co">#&gt; 126.7789 on  13 DF, p-value: 9.13936413478121e-21 </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Computational Details: </span>
+<span class="co">#&gt;   Solver converged with 173 iterations to a minimum at 4.5744 .</span>
+<span class="co">#&gt;   Local minima check: NA</span>
+<span class="co">#&gt;   stopping criterion outer loop: 1e-06</span>
+<span class="co">#&gt;   stopping criterion inner loop: 1e-06</span>
+<span class="co">#&gt;   Market shares are integrated with provided_by_user and 20 draws. </span>
+<span class="co">#&gt;   Method for standard errors: heteroskedastic</span></code></pre></div>
+<p>The arguments in greater detail:</p>
+<ul>
+<li><p><code>par_theta2</code> gives initial values for non-linear parameters to be optimized over. Correct naming of columns and rows is important to allow correct matching.</p></li>
+<li><p><code>solver_method</code>, <code>solver_maxit</code> , <code>solver_reltol</code>: solver related arguments that specify the R internal optimization (<code>optim</code> function). Additional arguments can be passed to optim via <code>...</code></p></li>
+<li><p><code>standardError</code> can be specified as <code>homoskedastic</code>, <code>heteroskedastic</code> or <code>cluster</code>. The latter requires the variable <code>group_structure</code> in <code>productData</code> giving the related cluster.</p></li>
+<li><p>if <code>extremumCheck</code> is <code>TRUE</code>, numerical derivatives at the solver optimum are used to check, if a local minimum was found</p></li>
+<li><p><code>printLevel</code> controls for the amount of information that is provided during the estimation</p></li>
+</ul>
+<p>Many of these arguments have default values. In the following setting you see a minimum of necessary arguments with an automatic generation of integration draws and just unobserved heterogeneity. The summary output informs you about the most important default values.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">nevo_data2 &lt;-<span class="st"> </span><span class="kw">BLP_data</span>(<span class="dt">model =</span> nevos_model,
+                      <span class="dt">market_identifier=</span><span class="st">&quot;cdid&quot;</span>,
+                     
+                      <span class="dt">product_identifier =</span> <span class="st">&quot;product_id&quot;</span>,
+                      <span class="dt">productData =</span> productData,
+                      <span class="dt">integration_method =</span> <span class="st">&quot;MLHS&quot;</span>, 
+                      <span class="dt">integration_accuracy =</span> <span class="dv">20</span>, <span class="dt">integration_seed =</span> <span class="dv">213</span>)
+<span class="co">#&gt; Mean utility is initialized with 0 because of missing or invalid par_delta argument.</span>
+
+blp_est2 &lt;-<span class="st"> </span><span class="kw">estimateBLP</span>( <span class="dt">blp_data=</span>nevo_data2, <span class="dt">printLevel =</span> <span class="dv">1</span> )
+<span class="co">#&gt; blp_data were prepared with the following arguments:</span>
+<span class="co">#&gt; BLP_data(model = nevos_model, market_identifier = &quot;cdid&quot;, product_identifier = &quot;product_id&quot;, </span>
+<span class="co">#&gt;     productData = productData, integration_accuracy = 20, integration_method = &quot;MLHS&quot;, </span>
+<span class="co">#&gt;     integration_seed = 213)</span>
+<span class="co">#&gt; Starting a BLP demand estimation with  2256  observations in  94  markets...</span>
+<span class="co">#&gt; [integration::method  integration::amountDraws 20 ]</span>
+<span class="co">#&gt; [blp::inner_tol 1e-09  blp::inner_maxit 10000 ]</span>
+<span class="co">#&gt; [solver::method BFGS  solver::maxit 10000  solver::reltol 1e-06 ]</span>
+<span class="co">#&gt; gmm objective: 189.9432</span>
+<span class="co">#&gt; gmm objective: Inf [delta contains NaN's] </span>
+<span class="co">#&gt; gmm objective: 38181.19</span>
+<span class="co">#&gt; gmm objective: 1730.558</span>
+<span class="co">#&gt; gmm objective: 263.4083</span>
+<span class="co">#&gt; gmm objective: 192.4396</span>
+<span class="co">#&gt; gmm objective: 189.8527</span>
+<span class="co">#&gt; gmm objective: 14921.45</span>
+<span class="co">#&gt; gmm objective: 794.7065</span>
+<span class="co">#&gt; gmm objective: 209.7249</span>
+<span class="co">#&gt; gmm objective: 188.7052</span>
+<span class="co">#&gt; gmm objective: 299.2339</span>
+<span class="co">#&gt; gmm objective: 191.7708</span>
+<span class="co">#&gt; gmm objective: 188.5727</span>
+<span class="co">#&gt; gmm objective: 188.5122</span>
+<span class="co">#&gt; gmm objective: 188.5029</span>
+<span class="co">#&gt; gmm objective: 188.5029</span>
+<span class="co">#&gt; gmm objective: 201.0545</span>
+<span class="co">#&gt; gmm objective: 189.0058</span>
+<span class="co">#&gt; gmm objective: 188.5229</span>
+<span class="co">#&gt; gmm objective: 188.5037</span>
+<span class="co">#&gt; gmm objective: 188.503</span>
+<span class="co">#&gt; gmm objective: 188.5029</span>
+<span class="co">#&gt; gmm objective: 188.5029</span>
+<span class="co">#&gt; ------------------------------------------ </span>
+<span class="co">#&gt; Solver message: Successful convergence </span>
+<span class="co">#&gt; ------------------------------------------ </span>
+<span class="co">#&gt; Final GMM evaluation at optimal parameters: </span>
+<span class="co">#&gt; gmm objective: 188.5029</span>
+<span class="co">#&gt;   theta (RC): 0.15 -0.3 0 0.14 </span>
+<span class="co">#&gt;   theta (demogr.):  </span>
+<span class="co">#&gt;   inner iterations: 61 </span>
+<span class="co">#&gt;   gradient: 2e-04 0 -0.0204 1e-04 </span>
+<span class="co">#&gt; Using the heteroskedastic asymptotic variance-covariance matrix... </span>
+<span class="co">#&gt; Extremum Check: positive</span>
+
+<span class="kw">summary</span>(blp_est2) 
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Data information:</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;   94 market(s) with 2256 products </span>
+<span class="co">#&gt;   25 linear coefficient(s) (24 exogenous coefficients) </span>
+<span class="co">#&gt;   4 non-linear parameters related to random coefficients </span>
+<span class="co">#&gt;   0 demographic variable(s) </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Estimation results:</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;  Linear Coefficients</span>
+<span class="co">#&gt;                          Estimate Std. Error    t value      Pr(&gt;|t|)</span>
+<span class="co">#&gt; (Intercept)            -1.7799087  0.2397708  -7.423375  1.141731e-13</span>
+<span class="co">#&gt; price                 -30.0963431  1.1024558 -27.299365 4.315817e-164</span>
+<span class="co">#&gt; productdummyproduct10   1.8641775  0.2406974   7.744900  9.565674e-15</span>
+<span class="co">#&gt; productdummyproduct11   1.7676586  0.2248843   7.860301  3.832126e-15</span>
+<span class="co">#&gt; productdummyproduct12  -0.2876883  0.1602658  -1.795070  7.264253e-02</span>
+<span class="co">#&gt; productdummyproduct13   2.2491273  0.1504198  14.952338  1.503747e-50</span>
+<span class="co">#&gt; productdummyproduct14   1.7844367  0.2282750   7.817049  5.407593e-15</span>
+<span class="co">#&gt; productdummyproduct15   2.1642177  0.2255519   9.595210  8.374641e-22</span>
+<span class="co">#&gt; productdummyproduct16   3.6877143  0.1808915  20.386330  2.211237e-92</span>
+<span class="co">#&gt; productdummyproduct17   0.7941551  0.2367072   3.355010  7.936202e-04</span>
+<span class="co">#&gt; productdummyproduct18   0.8806886  0.2350368   3.747024  1.789448e-04</span>
+<span class="co">#&gt; productdummyproduct19   1.7652157  0.1863495   9.472608  2.729424e-21</span>
+<span class="co">#&gt; productdummyproduct2    2.3645007  0.1771094  13.350512  1.176380e-40</span>
+<span class="co">#&gt; productdummyproduct20   2.8136100  0.2308568  12.187687  3.615371e-34</span>
+<span class="co">#&gt; productdummyproduct21   2.6849320  0.2328602  11.530232  9.289330e-31</span>
+<span class="co">#&gt; productdummyproduct22   0.4781141  0.2306766   2.072659  3.820398e-02</span>
+<span class="co">#&gt; productdummyproduct23   1.3807879  0.2257963   6.115192  9.644062e-10</span>
+<span class="co">#&gt; productdummyproduct24   2.1776559  0.2358099   9.234795  2.587808e-20</span>
+<span class="co">#&gt; productdummyproduct3    1.8011734  0.1491293  12.077934  1.381474e-33</span>
+<span class="co">#&gt; productdummyproduct4    0.7697762  0.2296839   3.351459  8.038688e-04</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; ...</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;  5 estimates are omitted. They are available in the LinCoefficients generated by summary.</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;  Random Coefficients</span>
+<span class="co">#&gt;                          Estimate Std. Error     t value  Pr(&gt;|t|)</span>
+<span class="co">#&gt; unobs_sd*(Intercept)  0.148175983  1.6693199  0.08876428 0.9292692</span>
+<span class="co">#&gt; unobs_sd*price       -0.304298641  5.6552127 -0.05380852 0.9570877</span>
+<span class="co">#&gt; unobs_sd*sugar        0.004900458  0.1276616  0.03838630 0.9693797</span>
+<span class="co">#&gt; unobs_sd*mushy        0.141711614  2.0588204  0.06883146 0.9451238</span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt;  Wald Test</span>
+<span class="co">#&gt; 0.0141 on  4 DF, p-value: 0.999975209516464 </span>
+<span class="co">#&gt; </span>
+<span class="co">#&gt; Computational Details: </span>
+<span class="co">#&gt;   Solver converged with 24 iterations to a minimum at 188.5029 .</span>
+<span class="co">#&gt;   Local minima check: positive</span>
+<span class="co">#&gt;   stopping criterion outer loop: 1e-06</span>
+<span class="co">#&gt;   stopping criterion inner loop: 1e-09</span>
+<span class="co">#&gt;   Market shares are integrated with MLHS and 20 draws. </span>
+<span class="co">#&gt;   Method for standard errors: heteroskedastic</span></code></pre></div>
+</div>
+</div>
+<div id="postestimation" class="section level1">
+<h1>Postestimation</h1>
+<div id="standard-errors" class="section level2">
+<h2>Standard Errors</h2>
+<p>Standard errors can be computed with three options that control for the unobserved characteristic <span class="math inline">\(\xi\)</span>, which consists of <span class="math inline">\(N\)</span> elements. <span class="math inline">\(\Omega\)</span> denotes the variance covariance matrix of <span class="math inline">\(\xi\)</span>.</p>
+<ul>
+<li><p>option <code>homoskedastic</code> requires the standard deviation <span class="math inline">\(\sigma_i\)</span> for each <span class="math inline">\(\xi_i \;\forall i\in 1,\cdots,N\)</span> to be identical: <span class="math display">\[\Omega = \begin{pmatrix} \sigma &amp; 0 &amp;
+\dots &amp; 0\\ 0 &amp; \sigma &amp;  &amp; 0\\ \vdots &amp;  &amp; \ddots &amp; 0\\
+0 &amp; 0 &amp; 0 &amp; \sigma \\ \end{pmatrix}\]</span></p></li>
+<li><p>option <code>heteroskedastic</code> allows for individual standard deviations <span class="math inline">\(\sigma_i\)</span> for each <span class="math inline">\(\xi_i\)</span> : <span class="math display">\[\Omega = \begin{pmatrix} \sigma_1 &amp; 0 &amp;
+\dots &amp; 0\\
+0 &amp; \sigma_2 &amp;  &amp; 0\\
+\vdots &amp;  &amp; \ddots &amp; 0\\
+0 &amp; 0 &amp; 0 &amp; \sigma_N \\ \end{pmatrix}\]</span></p></li>
+<li><p>option <code>cluster</code> allows for cluster individual variance covariance matrizes in each of <span class="math inline">\(M\)</span> cluster groups. For this option the argument <code>group_structure</code> needs to be specified in the function <code>BLP_data</code> to determine the cluster group. This gives the block-diagonal form with <span class="math inline">\(\Sigma_m\)</span> as the variance covariance matrix for all <span class="math inline">\(\xi_i\)</span> in cluster <span class="math inline">\(m\)</span>:</p></li>
+</ul>
+<p><span class="math display">\[\Omega = \begin{pmatrix} \Sigma_1 &amp; 0 &amp;
+\dots &amp; 0\\
+0 &amp; \Sigma_2 &amp;  &amp; 0\\
+\vdots &amp;  &amp; \ddots &amp; 0\\
+0 &amp; 0 &amp; 0 &amp; \Sigma_M \\ \end{pmatrix}\]</span></p>
+</div>
+<div id="elasticities" class="section level2">
+<h2>Elasticities</h2>
+<p>The following code demonstrates the calculation of elasticities.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">get_elasticities</span>(<span class="dt">blp_data=</span>nevo_data,
+                 <span class="dt">blp_estimation=</span> blp_est,
+                 <span class="dt">variable =</span> <span class="st">&quot;price&quot;</span>,
+                 <span class="dt">products =</span> <span class="kw">c</span>(<span class="st">&quot;cereal_1&quot;</span>,<span class="st">&quot;cereal_4&quot;</span>),
+                 <span class="dt">market =</span> <span class="st">&quot;market_2&quot;</span>)
+<span class="co">#&gt;              cereal_1    cereal_4</span>
+<span class="co">#&gt; cereal_1 -1.710335908  0.00543326</span>
+<span class="co">#&gt; cereal_4  0.006965469 -2.71765805</span></code></pre></div>
+<p>The value of the elasticity matrix in row <span class="math inline">\(j\)</span> and column <span class="math inline">\(i\)</span> for a variable <span class="math inline">\(x\)</span>, gives the effect of a change in product <span class="math inline">\(i\)</span>’s characteristic <span class="math inline">\(x\)</span> on the share of product <span class="math inline">\(j\)</span>.</p>
+</div>
+</div>
+<div id="modular-examples" class="section level1">
+<h1>Modular Examples</h1>
+<p>Further analysis like incorporating a supply side or performing a merger simulation often requires access to building blocks of the BLP algorithm. The following wrappers insure correct data inputs and access the internal functions of the algorithm.</p>
+<p>In the following, you find an example of the contraction mapping and an evaluation of the GMM function at the starting guess:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+delta_eval &lt;-<span class="st"> </span><span class="kw">getDelta_wrap</span>(  <span class="dt">blp_data=</span>nevo_data,
+                              <span class="dt">par_theta2 =</span> theta_guesses,
+                              <span class="dt">printLevel =</span> <span class="dv">4</span> )
+<span class="co">#&gt; ----------------------</span>
+<span class="co">#&gt;   dist: 0.709015</span>
+<span class="co">#&gt;   dist: 0.147383</span>
+<span class="co">#&gt;   dist: 0.0669541</span>
+<span class="co">#&gt;   dist: 0.0430535</span>
+<span class="co">#&gt;   dist: 0.0324573</span>
+<span class="co">#&gt;   dist: 0.0263458</span>
+<span class="co">#&gt;   dist: 0.02112</span>
+<span class="co">#&gt;   dist: 0.0169119</span>
+<span class="co">#&gt;   dist: 0.0135664</span>
+<span class="co">#&gt;   dist: 0.0109078</span>
+<span class="co">#&gt;   dist: 0.00878933</span>
+<span class="co">#&gt;   dist: 0.00709574</span>
+<span class="co">#&gt;   dist: 0.00573767</span>
+<span class="co">#&gt;   dist: 0.00464573</span>
+<span class="co">#&gt;   dist: 0.00376578</span>
+<span class="co">#&gt;   dist: 0.00305531</span>
+<span class="co">#&gt;   dist: 0.00248075</span>
+<span class="co">#&gt;   dist: 0.0020155</span>
+<span class="co">#&gt;   dist: 0.00163834</span>
+<span class="co">#&gt;   dist: 0.00133231</span>
+<span class="co">#&gt;   dist: 0.00108382</span>
+<span class="co">#&gt;   dist: 0.000881926</span>
+<span class="co">#&gt;   dist: 0.000717803</span>
+<span class="co">#&gt;   dist: 0.000584333</span>
+<span class="co">#&gt;   dist: 0.000475754</span>
+<span class="co">#&gt;   dist: 0.000387398</span>
+<span class="co">#&gt;   dist: 0.000315485</span>
+<span class="co">#&gt;   dist: 0.000256942</span>
+<span class="co">#&gt;   dist: 0.000209276</span>
+<span class="co">#&gt;   dist: 0.000170463</span>
+<span class="co">#&gt;   dist: 0.000138854</span>
+<span class="co">#&gt;   dist: 0.000113111</span>
+<span class="co">#&gt;   dist: 9.21432e-005</span>
+<span class="co">#&gt;   dist: 7.50641e-005</span>
+<span class="co">#&gt;   dist: 6.11519e-005</span>
+<span class="co">#&gt;   dist: 4.9819e-005</span>
+<span class="co">#&gt;   dist: 4.05869e-005</span>
+<span class="co">#&gt;   dist: 3.30659e-005</span>
+<span class="co">#&gt;   dist: 2.69389e-005</span>
+<span class="co">#&gt;   dist: 2.19473e-005</span>
+<span class="co">#&gt;   dist: 1.78808e-005</span>
+<span class="co">#&gt;   dist: 1.45678e-005</span>
+<span class="co">#&gt;   dist: 1.18687e-005</span>
+<span class="co">#&gt;   dist: 9.66966e-006</span>
+<span class="co">#&gt;   dist: 7.87811e-006</span>
+<span class="co">#&gt;   dist: 6.41851e-006</span>
+<span class="co">#&gt;   dist: 5.22934e-006</span>
+<span class="co">#&gt;   dist: 4.26049e-006</span>
+<span class="co">#&gt;   dist: 3.47115e-006</span>
+<span class="co">#&gt;   dist: 2.82805e-006</span>
+<span class="co">#&gt;   dist: 2.31279e-006</span>
+<span class="co">#&gt;   dist: 1.91861e-006</span>
+<span class="co">#&gt;   dist: 1.59161e-006</span>
+<span class="co">#&gt;   dist: 1.32035e-006</span>
+<span class="co">#&gt;   dist: 1.09532e-006</span>
+<span class="co">#&gt;   dist: 9.96355e-007</span>
+
+
+productData<span class="op">$</span>startingGuessesDelta[<span class="dv">1</span><span class="op">:</span><span class="dv">6</span>]
+<span class="co">#&gt; [1] -3.944367 -2.845205 -3.958199 -4.934153 -2.425356 -4.086816</span>
+delta_eval<span class="op">$</span>delta[<span class="dv">1</span><span class="op">:</span><span class="dv">6</span>]
+<span class="co">#&gt; cereal_1_market_1 cereal_2_market_1 cereal_3_market_1 cereal_4_market_1 </span>
+<span class="co">#&gt;         -7.069730         -4.357650         -6.056847         -5.887444 </span>
+<span class="co">#&gt; cereal_5_market_1 cereal_6_market_1 </span>
+<span class="co">#&gt;         -3.501263         -3.079300</span>
+delta_eval<span class="op">$</span>counter
+<span class="co">#&gt; [1] 56</span>
+
+
+gmm &lt;-<span class="st"> </span><span class="kw">gmm_obj_wrap</span>(  <span class="dt">blp_data=</span>nevo_data,
+                      <span class="dt">par_theta2 =</span> theta_guesses,
+                      <span class="dt">printLevel =</span> <span class="dv">2</span>)
+<span class="co">#&gt; gmm objective: 29.3523</span>
+<span class="co">#&gt;   theta (RC): 0.33 2.45 0.02 0.24 </span>
+<span class="co">#&gt;   theta (demogr.): 5.48 15.89 -0.25 1.26 0 -1.2 0 0 0.2 0 0.05 -0.81 0 2.63 0 0 </span>
+<span class="co">#&gt;   inner iterations: 69 </span>
+<span class="co">#&gt;   gradient: 9.8431 0.3168 363.4813 16.3593 10.5995 0.7023 42.4814 -3.4753 13.4895 -2.0292 10.879 1.2831 -0.571 </span>
+<span class="co">#&gt; [1] 29.3523</span>
+
+gmm<span class="op">$</span>local_min
+<span class="co">#&gt; [1] 29.3523</span></code></pre></div>
+<p>Printed distances in the contraction mapping are maximum absolute distance between the current vector of mean utilities and the previous one.</p>
+<p>For any <span class="math inline">\(\theta_2\)</span>, you can compute predicted shares:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">shares &lt;-<span class="st"> </span><span class="kw">getShares_wrap</span>(  <span class="dt">blp_data=</span>nevo_data,
+                           <span class="dt">par_theta2 =</span> theta_guesses, <span class="dt">printLevel =</span> <span class="dv">4</span>)
+shares[<span class="dv">1</span><span class="op">:</span><span class="dv">6</span>]
+<span class="co">#&gt; cereal_1_market_1 cereal_2_market_1 cereal_3_market_1 cereal_4_market_1 </span>
+<span class="co">#&gt;       0.066138546       0.026031055       0.030931817       0.005596246 </span>
+<span class="co">#&gt; cereal_5_market_1 cereal_6_market_1 </span>
+<span class="co">#&gt;       0.039475547       0.007812016</span></code></pre></div>
+<p>The gradient contains two important building blocks as explained in the appendix of <span class="citation">Nevo (2001)</span>:</p>
+<ul>
+<li><p><span class="math inline">\(\frac{\partial s_{ijt}}{\partial \theta_2}\)</span> , i.e. the derivative of individual <span class="math inline">\(i\)</span>’s share of product <span class="math inline">\(j\)</span> in market <span class="math inline">\(t\)</span> with respect to non-linear parameters</p></li>
+<li><p><span class="math inline">\(\frac{\partial s_{ijt}}{\partial \delta}\)</span> , i.e. the derivative of individual <span class="math inline">\(i\)</span>’s share of product <span class="math inline">\(j\)</span> in market <span class="math inline">\(t\)</span> with respect to mean utilities</p></li>
+</ul>
+<p>Both are used to compute the jacobian and are easy to obtain with the package as the following example demonstrates:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+derivatives1 &lt;-<span class="st"> </span><span class="kw">dstdtheta_wrap</span>(  <span class="dt">blp_data=</span>nevo_data,
+                                 <span class="dt">cm_input =</span> delta_eval,
+                                 <span class="dt">market =</span> <span class="st">&quot;market_2&quot;</span>)
+<span class="co">#&gt; Evaluated at par_theta2:</span>
+<span class="co">#&gt;  [1]  0.3302  2.4526  0.0163  0.2441  5.4819 15.8935 -0.2506  1.2650</span>
+<span class="co">#&gt;  [9] -1.2000  0.2037  0.0511 -0.8091  2.6342</span>
+derivatives2 &lt;-<span class="st"> </span><span class="kw">dstddelta_wrap</span>(  <span class="dt">blp_data=</span>nevo_data,
+                                 <span class="dt">cm_input =</span> delta_eval,
+                                 <span class="dt">market =</span> <span class="st">&quot;market_2&quot;</span>)
+<span class="co">#&gt; Evaluated at par_theta2:</span>
+<span class="co">#&gt;  [1]  0.3302  2.4526  0.0163  0.2441  5.4819 15.8935 -0.2506  1.2650</span>
+<span class="co">#&gt;  [9] -1.2000  0.2037  0.0511 -0.8091  2.6342</span>
+
+jacobian &lt;-<span class="st"> </span><span class="kw">getJacobian_wrap</span>(<span class="dt">blp_data=</span>nevo_data,
+                             <span class="dt">par_theta2 =</span> theta_guesses,
+                             <span class="dt">printLevel =</span> <span class="dv">2</span>)
+
+jacobian[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>]
+<span class="co">#&gt;                   unobs_sd*(Intercept) unobs_sd*price unobs_sd*sugar</span>
+<span class="co">#&gt; cereal_1_market_1           -0.1029043     0.05148210      -1.689497</span>
+<span class="co">#&gt; cereal_2_market_1           -0.1941521     0.03483915      -7.935020</span>
+<span class="co">#&gt; cereal_3_market_1           -0.1099606     0.03125065      -1.449870</span>
+<span class="co">#&gt; cereal_4_market_1           -0.1341227     0.03963801      -1.451742</span>
+<span class="co">#&gt; cereal_5_market_1           -0.2273174     0.04610410      -5.765267</span>
+<span class="co">#&gt;                   unobs_sd*mushy</span>
+<span class="co">#&gt; cereal_1_market_1    -0.07753320</span>
+<span class="co">#&gt; cereal_2_market_1    -0.06694149</span>
+<span class="co">#&gt; cereal_3_market_1    -0.13773737</span>
+<span class="co">#&gt; cereal_4_market_1    -0.09275354</span>
+<span class="co">#&gt; cereal_5_market_1     0.04301055</span></code></pre></div>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
+<div id="refs" class="references">
+<div id="ref-BLP1995">
+<p>Berry, Steven, James Levinsohn, and Ariel Pakes. 1995. “Automobile Prices in Market Equilibrium.” <em>Econometrica</em>.</p>
+</div>
+<div id="ref-Brunner2017">
+<p>Brunner, Daniel, Florian Heiss, Andre Romahn, and Constantin Weiser. 2017. “Reliable Estimation of Random Coefficient Logit Demand Models.” <em>DICE Discussion Paper No 267</em>.</p>
+</div>
+<div id="ref-Nevo2001">
+<p>Nevo, Aviv. 2001. “A Practitioner’s Guide to Estimation of Random-Coefficients Logit Models of Demand.” <em>Journal of Economics &amp; Management Strategy</em>.</p>
+</div>
+</div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

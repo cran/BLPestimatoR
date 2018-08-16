@@ -1,0 +1,417 @@
+---
+title: "BLPestimatoR - Package for Demand Estimation"
+author: "Daniel Brunner"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{BLPestimatoR - Package for Demand Estimation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+  
+references:
+- id: BLP1995
+  title: Automobile Prices in Market Equilibrium
+  author: 
+  - family: Berry 
+    given: Steven
+  - family: Levinsohn 
+    given: James
+  - family: Pakes
+    given: Ariel
+  container-title: Econometrica 
+  type: article-journal
+  issued: 
+    year: 1995
+    
+- id: Brunner2017
+  title: Reliable Estimation of Random Coefficient Logit Demand Models 
+  author: 
+  - family: Brunner
+    given: Daniel
+  - family: Heiss
+    given: Florian
+  - family: Romahn
+    given: Andre
+  - family: Weiser
+    given: Constantin
+  container-title: DICE Discussion Paper No 267  
+  type: article-journal
+  issued: 
+    year: 2017
+    
+- id: Nevo2001
+  title: A Practitioner's Guide to Estimation of Random-Coefficients Logit Models of Demand
+  author: 
+  - family: Nevo
+    given: Aviv
+  container-title: Journal of Economics \& Management Strategy
+  type: article-journal
+  issued: 
+    year: 2001
+    
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+# Intro
+
+`BLPestimatoR` provides an efficient estimation algorithm to perform the demand estimation described in -@BLP1995. The routine uses analytic gradients and offers a large number of optimization routines and implemented integration methods as discussed in -@Brunner2017.
+
+This extended documentation demonstrates the steps of a typical demand estimation with the package:
+
+- prepare the data with `BLP_data` (includes the specification of a model and providing integration draws for observed or unobserved heterogeneity)
+- estimate the parameters with `estimate_BLP`
+- showing the results with `summary`
+- view the own- and crosspriceelasticities with `get_elasticities`
+
+The use of the algorithm's building blocks is explained as well. The well-known training data for the cereal market from -@Nevo2001 is used for demonstration purposes.
+
+
+
+
+# Data
+
+
+## Model
+
+Since version 0.1.6 the model is provided in R’s formula syntax and consists of five parts. The variable
+to be explained is given by observed market shares. Explanatory variables are grouped into four (possibly
+overlapping) categories separated by `|`:
+
+ - linear variables
+ - exogenous variables
+ - random coefficients
+ - instruments
+ 
+Nevo's model can be translated into the following formula syntax:
+  
+```{r}
+library(BLPestimatoR)
+
+nevos_model <- as.formula("share ~  price + productdummy |
+    0+ productdummy |
+    price + sugar + mushy |
+    0+ IV1 + IV2 + IV3 + IV4 + IV5 + IV6 + IV7 + IV8 + IV9 + IV10 + 
+    IV11 + IV12 + IV13 + IV14 + IV15 + IV16 + IV17 + IV18 + IV19 + IV20")
+```
+ 
+The model is directly related to consumer $i$'s indirect utility from purchasing cereal $j$ in market $t$:
+
+$$u_{ijt}=\sum_{m=1}^M x^{(m)}_{jt} \beta_{i,m}+\xi_{jt}+\epsilon_{ijt} \;\; \text{with}$$
+$$\beta_{i,m}= \bar{\beta}_m  + \sum_{r=1}^R  \gamma_{m,r} d_{i,r}  +  \sigma_m \nu_{i,m}$$
+and
+
+- M = 4 random coefficients (`price`, `sugar`, `mushy` and an intercept)
+- R = 4 demographics (`income`, `incomesq`, `age`, `child`)
+- and the set of non-linear parameters to estimate:
+
+$$\theta_2 = 
+\begin{pmatrix}
+\sigma_1 & \gamma_{1,1} & \cdots & \gamma_{1,R} \\
+\sigma_2 & \gamma_{2,1} & \cdots & \gamma_{2,R} \\
+\vdots & \vdots &  \ddots & \vdots \\
+\sigma_M & \gamma_{M,1} & \cdots & \gamma_{M,R}
+\end{pmatrix}$$
+
+
+
+## Dataframe
+
+Product related variables are collected in the dataframe `productData` with the following requirements:
+
+ - missings are not allowed
+ - character variables are automatically transformed to a set of dummy variables
+ - a variable that describes market affiliation (`market_identifier`)
+ 
+A variable that uniquely identifies a product in a market (`product_identifier`) is optional, but enhances clarity (interpreting elasticities, for example, is much easier). `market_identifier` and `product_identifier` together uniquely identify an observation, which is used by the function `update_BLP_data` to update any variable in the data (in this case `product_identifier` is mandatory).
+
+In the cereal example, this gives the following dataframe:
+
+```{r}
+head(productData)
+```
+
+
+## Integration Draws
+The arguments related to the numerical integration problem are of particular importance when providing
+own integration draws and weights, which is most relevant for observed heterogeneity
+(for unobserved heterogeneity, the straightforward approach is the use of automatic integration).
+
+In the cereal data, both, observed and unobserved heterogeneity, is used for the random coefficients.
+Starting with observed heterogeneity, user provided draws are collected in a list. Each list entry must be
+named according to the name of a demographic. Each entry contains the following variables:
+
+ - a variable `market_identifier` that matches each line to a market (same variable name as in `productData`)
+ - integration draws for each market
+ 
+In the cereal example, observed heterogeneity is provided as follows (list names correspond to the demographics):
+
+```{r}
+demographicData$income[1:4,1:5]
+
+demographicData$incomesq[1:4,1:5]
+
+demographicData$age[1:4,1:5]
+
+demographicData$child[1:4,1:5]
+```
+
+If demographic input (`demographicData`) is missing, the estimation routine considers only coefficients for unobserved heterogeneity. This can be done by already implemented integration methods via `integration_method` as shown in the estimation section. In Nevo's cereal example however, a specific set of 20 draws is
+given. For this situation, draws are also provided as a list (list names correspond to the formula's random coefficients and each list entry has a variable `market_identifier`):
+
+```{r}
+originalDraws$constant[1:4,1:5]
+
+# renaming constants:
+names(originalDraws)[1] <- "(Intercept)"
+
+originalDraws$price[1:4,1:5]
+
+originalDraws$sugar[1:4,1:5]
+
+originalDraws$mushy[1:4,1:5]
+```
+
+As demonstrated above, list entries for draws of constants **must** be named `(Intercept)`. Other names of list entries must match the random coefficients specified in the formula.
+
+
+## Calling BLP_data
+
+Calling `BLP_data` structures and prepares the data for estimation and creates the data object:
+
+```{r }
+productData$startingGuessesDelta  <- c( log(w_guesses)) # include orig. draws in the product data
+
+nevo_data <- BLP_data(model = nevos_model,
+                      market_identifier="cdid",
+                      par_delta = "startingGuessesDelta",
+                      product_identifier = "product_id",
+                      productData = productData,
+                      demographic_draws = demographicData,
+                      blp_inner_tol = 1e-6, blp_inner_maxit = 5000,
+                      integration_draws = originalDraws, 
+                      integration_weights= rep(1/20,20))
+```
+
+
+The arguments in greater detail:
+
+- `model` provides the utility model as explained above
+
+- `market_identifier` gives the name of the variable in `productData` that matches
+each observation to a market
+
+- `product_identifier` gives the name of the variable in `productData` that matches
+each observation to a product (should be unique in a market)
+
+- `productData` is given as a dataframe and `demographicData` as a list as described above
+
+- `par_delta` gives the name of the variable in `productData` for mean utilities
+
+- `blp_inner_tol` , `blp_inner_maxit`: arguments related to be BLP algorithm include the convergence threshold and the maximum number of iterations in the contraction mapping
+
+- if integration draws are provided manually, `integration_draws` and
+`integration_weights` need to be specified 
+
+- for automatic integration the user specifies `integration_method`, for example
+`integration_method= "MLHS"`, and the accuracy of the integration method by
+`integration_accuracy` (for stochastic integration methods this equals the number
+of draws)
+
+If you decide to update your data later, you can use the function `update_BLP_data`. 
+
+
+
+# Estimation 
+
+## Starting guesses
+
+The provided set of starting guesses `par_theta2` is matched with formula input and demographic data:
+
+- rownames of `par_theta2` must match with the random coefficients specified in the formula (note: constants **must** be named `(Intercept)` ) 
+- colnames of `par_theta2` must match with list entry names of `demographicData` and a column for unobserved heterogeneity (**must** be named `unobs_sd)
+- `NA`s in `par_theta2` indicate the exclusion from estimation, i.e. the coefficient is assumed to be zero.
+ 
+These requirements are demonstrated with Nevo's starting guesses:
+
+```{r}
+#before:
+theta_guesses
+theta_guesses[theta_guesses==0] <- NA 
+colnames(theta_guesses) <- c("unobs_sd", "income", "incomesq", "age", "child" )
+rownames(theta_guesses) <- c("(Intercept)", "price" , "sugar", "mushy")
+
+# correctly named:
+theta_guesses
+```
+
+
+
+## Calling estimateBLP
+
+The following code performs the demand estimation:
+
+```{r}
+
+blp_est <- estimateBLP( blp_data=nevo_data,
+                        par_theta2 = theta_guesses,
+                        solver_method = "BFGS", solver_maxit = 1000, solver_reltol = 1e-6,
+                        standardError = "heteroskedastic",
+                        extremumCheck = FALSE ,
+                        printLevel = 1 )
+
+summary(blp_est)
+```
+
+
+
+The arguments in greater detail:
+
+- `par_theta2` gives initial values for non-linear parameters to be optimized
+over. Correct naming of columns and rows is important to allow correct matching. 
+
+- `solver_method`, `solver_maxit` , `solver_reltol`: solver related arguments that specify the R internal optimization (`optim` function). Additional arguments can be passed to optim via `...`
+
+- `standardError` can be specified as `homoskedastic`, `heteroskedastic` or
+`cluster`. The latter requires the variable `group_structure` in `productData` giving the related
+cluster.
+
+- if `extremumCheck` is `TRUE`, numerical derivatives at the solver optimum are used
+to check, if a local minimum was found
+
+- `printLevel` controls for the amount of information that is provided during the
+estimation
+
+
+Many of these arguments have default values. In the following setting you see a
+minimum of necessary arguments with an automatic generation of integration
+draws and just unobserved heterogeneity. The summary output informs you about the most important default values.
+
+```{r} 
+nevo_data2 <- BLP_data(model = nevos_model,
+                      market_identifier="cdid",
+                     
+                      product_identifier = "product_id",
+                      productData = productData,
+                      integration_method = "MLHS", 
+                      integration_accuracy = 20, integration_seed = 213)
+
+blp_est2 <- estimateBLP( blp_data=nevo_data2, printLevel = 1 )
+
+summary(blp_est2) 
+```
+
+# Postestimation
+
+## Standard Errors
+
+Standard errors can be computed with three options that control for the unobserved characteristic $\xi$, which consists of $N$ elements. $\Omega$ denotes the variance covariance matrix of $\xi$. 
+
+- option `homoskedastic` requires the standard deviation $\sigma_i$ for each $\xi_i \;\forall
+i\in 1,\cdots,N$ to be identical: 
+$$\Omega = \begin{pmatrix} \sigma & 0 &
+\dots & 0\\ 0 & \sigma &  & 0\\ \vdots &  & \ddots & 0\\
+0 & 0 & 0 & \sigma \\ \end{pmatrix}$$
+
+- option `heteroskedastic` allows for individual standard deviations $\sigma_i$ for each
+$\xi_i$ :
+$$\Omega = \begin{pmatrix} \sigma_1 & 0 &
+\dots & 0\\
+0 & \sigma_2 &  & 0\\
+\vdots &  & \ddots & 0\\
+0 & 0 & 0 & \sigma_N \\ \end{pmatrix}$$
+
+
+- option `cluster` allows for cluster individual variance covariance matrizes in each of $M$ cluster groups. For this option the argument `group_structure` needs to be specified in the function `BLP_data` to determine the cluster group. This gives the block-diagonal form with $\Sigma_m$ as the variance covariance matrix for all $\xi_i$ in cluster $m$:
+
+$$\Omega = \begin{pmatrix} \Sigma_1 & 0 &
+\dots & 0\\
+0 & \Sigma_2 &  & 0\\
+\vdots &  & \ddots & 0\\
+0 & 0 & 0 & \Sigma_M \\ \end{pmatrix}$$
+
+
+
+
+## Elasticities 
+
+The following code demonstrates the calculation of elasticities. 
+
+```{r}
+get_elasticities(blp_data=nevo_data,
+                 blp_estimation= blp_est,
+                 variable = "price",
+                 products = c("cereal_1","cereal_4"),
+                 market = "market_2")
+```
+
+The value of the elasticity matrix in row $j$ and column $i$ for a variable $x$, gives the effect of a change in product $i$'s characteristic $x$ on the share of product $j$.
+
+# Modular Examples
+
+Further analysis like incorporating a supply side or performing a merger simulation often requires access to building blocks of the BLP algorithm. The following wrappers insure correct data inputs and access the internal functions of the algorithm.
+
+In the following, you find an example of the contraction mapping and an evaluation of the GMM function at the starting guess:
+
+```{r}
+
+delta_eval <- getDelta_wrap(  blp_data=nevo_data,
+                              par_theta2 = theta_guesses,
+                              printLevel = 4 )
+
+
+productData$startingGuessesDelta[1:6]
+delta_eval$delta[1:6]
+delta_eval$counter
+
+
+gmm <- gmm_obj_wrap(  blp_data=nevo_data,
+                      par_theta2 = theta_guesses,
+                      printLevel = 2)
+
+gmm$local_min
+```
+Printed distances in the contraction mapping are maximum absolute distance between the current vector of mean utilities and the previous one.
+
+
+For any $\theta_2$, you can compute predicted shares: 
+```{r}
+shares <- getShares_wrap(  blp_data=nevo_data,
+                           par_theta2 = theta_guesses, printLevel = 4)
+shares[1:6]
+```
+
+
+
+The gradient contains two important building blocks as explained in the appendix of -@Nevo2001:
+
+- $\frac{\partial s_{ijt}}{\partial \theta_2}$ , i.e. the derivative of individual $i$'s share of product $j$ in market $t$ with respect to non-linear parameters
+
+- $\frac{\partial s_{ijt}}{\partial \delta}$ , i.e. the derivative of individual $i$'s share of product $j$ in market $t$ with respect to mean utilities
+
+Both are used to compute the jacobian and are easy to obtain with the package as the following example demonstrates:
+
+```{r}
+
+derivatives1 <- dstdtheta_wrap(  blp_data=nevo_data,
+                                 cm_input = delta_eval,
+                                 market = "market_2")
+derivatives2 <- dstddelta_wrap(  blp_data=nevo_data,
+                                 cm_input = delta_eval,
+                                 market = "market_2")
+
+jacobian <- getJacobian_wrap(blp_data=nevo_data,
+                             par_theta2 = theta_guesses,
+                             printLevel = 2)
+
+jacobian[1:5,1:4]
+
+```
+
+# References

@@ -17,3 +17,15 @@ getDelta <- function(theta2, deltaOld, cdid, cdindex, Xrandom, obsshare, innerCr
     .Call('_BLPestimatoR_getDelta', PACKAGE = 'BLPestimatoR', theta2, deltaOld, cdid, cdindex, Xrandom, obsshare, innerCrit, innerMaxit, printLevel, indices, nodesRcMktShape, nodesDemMktShape, weights)
 }
 
+dstddelta_c <- function(sijt, weights) {
+    .Call('_BLPestimatoR_dstddelta_c', PACKAGE = 'BLPestimatoR', sijt, weights)
+}
+
+dstdtheta_c <- function(sijt_arma, indices, xt_arma, qvt_arma, dt_arma, weights_arma) {
+    .Call('_BLPestimatoR_dstdtheta_c', PACKAGE = 'BLPestimatoR', sijt_arma, indices, xt_arma, qvt_arma, dt_arma, weights_arma)
+}
+
+jacob_c <- function(sij, indices, blp_data, blp_parameters, blp_integration, printLevel) {
+    .Call('_BLPestimatoR_jacob_c', PACKAGE = 'BLPestimatoR', sij, indices, blp_data, blp_parameters, blp_integration, printLevel)
+}
+

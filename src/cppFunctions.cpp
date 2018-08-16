@@ -1,6 +1,12 @@
-//Includes/namespaces
-#include <Rcpp.h>
+#include <RcppArmadillo.h>
+// [[Rcpp::depends(RcppArmadillo)]]
+// Includes/namespaces
+#include <iostream>
+#include <string>
+
+
 using namespace Rcpp;
+using namespace std;
 
 // [[Rcpp::export]]
 NumericMatrix  getSij(const NumericMatrix &expmu,
@@ -122,7 +128,7 @@ NumericMatrix  getExpMu(const NumericMatrix &theta2Matrix,
 }
 
 
-//[[Rcpp::export]]
+// [[Rcpp::export]]
 List getDelta( const NumericMatrix &theta2,
                const NumericVector &deltaOld,
 
@@ -286,4 +292,233 @@ List getDelta( const NumericMatrix &theta2,
 }
 
 
+// [[Rcpp::export]]
+arma::mat dstddelta_c( arma::mat &sijt,
+                     arma::mat &weights ) { // weight are provided as a [amountNodes X 1] matrix
+
+  int numProdt = sijt.n_rows;
+  arma::mat Dsdxi(numProdt, numProdt);
+  arma::mat weightsMat = repmat( weights,
+                                 1, //num_copies_per_row
+                                 numProdt); //num_copies_per_col
+  Dsdxi = -(( weightsMat.t() % sijt ) * sijt.t() );
+  Dsdxi.diag() = (sijt % (1 - sijt)) * weights ;
+
+  return ( Dsdxi );
+}
+
+
+
+
+// [[Rcpp::export]]
+arma::mat dstdtheta_c(arma::mat &sijt_arma,
+                      const NumericMatrix &indices,
+                      arma::mat &xt_arma,
+                      arma::mat &qvt_arma,
+                      arma::mat &dt_arma,
+                      arma::mat &weights_arma ){ // weight are provided as a [amountNodes X 1] matrix
+  int numProdt = xt_arma.n_rows;
+  int K = xt_arma.n_cols;
+  int total_parameter = indices.nrow();
+  int total_demographics = max( indices(_,1) ) -1;
+  int amountNodes = qvt_arma.n_cols / K;
+
+
+  arma::mat dsdtheta_out(numProdt, total_parameter);
+  arma::vec sumterm(amountNodes);
+  arma::mat bracket_arma(numProdt, amountNodes);
+  arma::mat scalar_arma(numProdt, amountNodes);
+
+  arma::mat xti_arma(numProdt,
+                     1);
+  arma::mat xtiLarge_arma(numProdt,
+                          amountNodes);
+  arma::mat dsdtheta_arma( numProdt,
+                           total_parameter );
+
+
+  for (int i = 0; i < K; i++) {
+
+    // At the C-level, all R objects are stored in a common datatype,
+    // the SEXP, or S-expression. All R objects are S-expressions so every C function
+    // that you create must return a SEXP as output and take SEXPs as inputs. (Technically,
+    // this is a pointer to a structure with typedef SEXPREC.) A SEXP is a variant type,
+    // with subtypes for all R’s data structures.
+
+    // coef_for_i <- blp.parameters$indices[ ,1] == i
+    // // NumericMatrix indices =  blp_parameters["indices"] ;
+    //NumericVector row_indices = indices(_, 0);
+    arma::vec row_indices = indices(_, 0);
+    arma::vec col_indices = indices(_, 1);
+
+    // get rows of "indices" that belong die random coefficient i
+    arma::uvec row_indices_i = arma::find( row_indices == (i+1) );
+
+    // Optimierungspotential: kann außerhalb der Funktion passieren:
+
+    // check column indizes for random coef. i for 0 (=first column)
+    bool with_unobs_het_i = min( col_indices( row_indices_i ) ) == 1;
+
+    xti_arma =  xt_arma.col(i);
+    arma::mat sumterm_arma = trans( xti_arma ) * sijt_arma;    // (m=product)  for every person i (in cols)
+
+    xtiLarge_arma = repmat( xti_arma,
+                            1, //num_copies_per_row
+                            amountNodes); //num_copies_per_col
+    bracket_arma = xtiLarge_arma.each_row() - sumterm_arma;
+
+    if (with_unobs_het_i) {
+      scalar_arma = sijt_arma.each_row() % qvt_arma.submat(  0,                          // first_row
+                                       i  * amountNodes,           // first_col
+                                       0,                          // last_row
+                                       (i+1) * amountNodes - 1  ); // last_col
+
+      dsdtheta_arma.col( row_indices_i(0) ) = (scalar_arma % bracket_arma) * weights_arma;
+    }
+
+    // Demographics:
+    if( total_demographics > 0 ){
+      int relevantDemographic_ij;
+      int startDem;
+
+      if( with_unobs_het_i ){
+        startDem=1;
+      }else{
+        startDem=0;
+      }
+
+      arma::uvec demographicsRow = row_indices_i.subvec(startDem,
+                                                        row_indices_i.size() -1 );
+
+      arma::vec relevantDemographics_i = col_indices.elem(demographicsRow) - 1 ; //Dem starts in sec. col (always)
+
+      int amountDemogr_i = relevantDemographics_i.size();
+
+      if( amountDemogr_i >= 1 ){
+
+        for (int j = 0; j < amountDemogr_i ; j++) {
+
+          relevantDemographic_ij = relevantDemographics_i( j ) - 1 ;
+
+          scalar_arma = sijt_arma.each_row() % dt_arma.submat(  0,     // first_row
+                                           (relevantDemographic_ij)  * amountNodes,           // first_col
+                                           0,                          // last_row
+                                           (relevantDemographic_ij+1) * amountNodes -1   );
+
+          dsdtheta_arma.col(demographicsRow(j)) = (scalar_arma % bracket_arma) * weights_arma;
+
+        }
+      } //end relevantDemographicsForI loop
+    }
+  } // end i loop
+
+  return ( dsdtheta_arma );
+}
+
+
+
+
+// [[Rcpp::export]]
+NumericMatrix jacob_c( NumericMatrix &sij,
+                       const NumericMatrix &indices,
+                       const List &blp_data,
+                       const List &blp_parameters,
+                       const List &blp_integration,
+                       const int &printLevel) {
+
+
+  int nobs = (int)blp_parameters["nobs"];
+  int K = (int)blp_parameters["K"];
+  int total_par = indices.nrow();
+  int total_dem =  max( indices(_,1) ) -1;
+  int nmkt = (int)blp_parameters["nmkt"];
+  Rcpp::NumericVector cdindex((SEXP)blp_parameters["cdindex"]);
+
+  NumericMatrix Xrandom((SEXP)blp_data["X_rand"]);
+
+  int amountDraws = (int)blp_integration["amountDraws"];
+  NumericMatrix nodesRcMktShape((SEXP)blp_integration["drawsRcMktShape"]);
+  NumericMatrix nodesDemMktShape((SEXP)blp_integration["drawsDemMktShape"]);
+  Rcpp::NumericVector weights((SEXP)blp_integration["weights"]);
+
+  arma::mat Xrandom_arma( Xrandom.begin(),
+                          Xrandom.nrow(),
+                          Xrandom.ncol(),
+                          false);
+  arma::mat nodesRcMktShape_arma(nodesRcMktShape.begin(),
+                                 nodesRcMktShape.nrow(),
+                                 nodesRcMktShape.ncol(),
+                                 false);
+  arma::mat nodesDemMktShape_arma(nodesDemMktShape.begin(),
+                                  nodesDemMktShape.nrow(),
+                                  nodesDemMktShape.ncol(),
+                                  false);
+  arma::mat sij_arma(sij.begin(), // Fehler wenn const vor sij Argument??
+                     sij.nrow(),
+                     sij.ncol(),
+                     false);
+
+  arma::mat weights_arma(weights.begin(),
+                         weights.size(), //row
+                         1, //col
+                         false);
+
+  arma::mat qvt_arma(1, K * amountDraws);
+  arma::mat dt_arma(1, amountDraws * total_dem);
+  arma::mat jacob_arma( nobs ,
+                        total_par);
+
+  // iterate over markets:
+  for (int t = 0; t < nmkt; t++) {
+
+    arma::mat x2t_arma = Xrandom_arma.submat(  cdindex(t),               // first_row
+                                               0,                        // first_col
+                                               cdindex(t+1)-1,             // last_row
+                                               K - 1  );                 // last_col
+
+    arma::mat sijt_arma = sij_arma.submat(  cdindex(t),               // first_row
+                                            0,                        // first_col
+                                            cdindex(t+1)-1,             // last_row
+                                            amountDraws - 1  );                 // last_col
+
+
+    arma::mat qvt_arma = nodesRcMktShape_arma.row( t );
+
+
+    if (total_dem >0) {
+      dt_arma = nodesDemMktShape_arma.row( t ) ;
+    }
+
+
+    arma::mat dsdxi_arma = dstddelta_c( sijt_arma,
+                                         weights_arma);
+
+    arma::mat dsdtheta_arma = dstdtheta_c( sijt_arma,
+                                           indices,
+                                          x2t_arma,
+                                          qvt_arma,
+                                          dt_arma,
+                                          weights_arma);
+
+    arma::mat invertible(1,1);
+    //  inverse check: inv(B,A) resets B and returns a bool set to false (exception is not thrown)
+
+    if( arma::inv(invertible, dsdxi_arma ) ) {
+      jacob_arma.submat(  cdindex(t),               // first_row
+                          0,                        // first_col
+                          cdindex(t+1)-1,             // last_row
+                          total_par - 1  ) = - dsdxi_arma.i() * dsdtheta_arma;
+
+    } else {
+      if (printLevel >= 2) {
+        Rcpp::Rcout << "Error in jacobian (market " << t
+                    << ") : Singular matrix occured" << std::endl;
+      }
+      return 0;
+    }
+
+  } // end of t loop
+
+  return ( wrap( jacob_arma ) );
+} // end of function
 
