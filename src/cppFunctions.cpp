@@ -1,6 +1,8 @@
+// -*- mode: C++; c-indent-level: 4; c-basic-offset: 4; indent-tabs-mode: nil; -*-
+
 #include <RcppArmadillo.h>
 // [[Rcpp::depends(RcppArmadillo)]]
-// Includes/namespaces
+
 #include <iostream>
 #include <string>
 
@@ -94,7 +96,6 @@ NumericMatrix  getExpMu(const NumericMatrix &theta2Matrix,
   int startpointDem ;
   int mktInd;
   double demPart = 0;
-  NumericMatrix xvPart(nobs,amountNodes);
   NumericMatrix expmu(nobs,amountNodes);
 
   for( int i=0; i<K;i++){ // iteriere ueber RC
