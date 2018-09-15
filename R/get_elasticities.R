@@ -179,12 +179,9 @@ get_elasticities <- function( blp_data, blp_estimation, variable, products , mar
       demographicReshape_Mkt <- matrix( NA )
     }
 
-    cdid_Mkt <- rep(1, nprod_Mkt)
 
     sij_Mkt <- blp_estimation$sij[ relevant_Obs_Mkt , ]
     weights <- blp_data$integration$weights
-
-    expdelta_Mkt<- exp( delta_mkt )
 
     theta2Mat <- .get.theta2.reshape(theta2.in = blp_estimation$theta_rc,
                                      totalRC = K,
@@ -193,12 +190,6 @@ get_elasticities <- function( blp_data, blp_estimation, variable, products , mar
                                      fill = 0)  # NA are replaced by zeros to simplify x * par in getExpMu
     rownames(theta2Mat) <- blp_estimation$rand_coef_rownames
     colnames(theta2Mat) <- blp_estimation$rand_coef_colnames
-
-    expmu_Mkt <- getExpMu(theta2Mat,
-                          drawsRCMktShape_Mkt,
-                          changingVariable_Mkt,
-                          cdid_Mkt,
-                          drawsDemMktShape_Mkt)
 
     sigma <- theta2Mat[ variable , "unobs_sd" ]
 

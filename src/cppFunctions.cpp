@@ -1,8 +1,6 @@
-// -*- mode: C++; c-indent-level: 4; c-basic-offset: 4; indent-tabs-mode: nil; -*-
-
 #include <RcppArmadillo.h>
 // [[Rcpp::depends(RcppArmadillo)]]
-
+// Includes/namespaces
 #include <iostream>
 #include <string>
 
@@ -88,7 +86,7 @@ NumericMatrix  getExpMu(const NumericMatrix &theta2Matrix,
                         const NumericMatrix &Xrandom,
                         const IntegerVector &cdid ,
                         const NumericMatrix &demographics){
-  int K = theta2Matrix.nrow();
+  int K = Xrandom.ncol();
   int totalDem = theta2Matrix.ncol()-1; //1 is RC column
   int nobs = Xrandom.nrow();
   int amountNodes = qv.ncol()/K;
@@ -98,11 +96,12 @@ NumericMatrix  getExpMu(const NumericMatrix &theta2Matrix,
   double demPart = 0;
   NumericMatrix expmu(nobs,amountNodes);
 
+
   for( int i=0; i<K;i++){ // iteriere ueber RC
     startpointRC= i*amountNodes;
 
     for( int z=0; z<nobs; z++){
-      mktInd= cdid[z]-1;
+      mktInd=  cdid[z] - 1;
       for( int r=0; r<amountNodes; r++){
 
         if(totalDem > 0){
@@ -124,6 +123,7 @@ NumericMatrix  getExpMu(const NumericMatrix &theta2Matrix,
       expmu(z,r) = exp( expmu(z,r) );
    }
   }
+
 
   return expmu;
 }

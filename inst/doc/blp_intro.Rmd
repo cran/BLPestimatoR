@@ -406,11 +406,11 @@ derivatives2 <- dstddelta_wrap(  blp_data=nevo_data,
                                  cm_input = delta_eval,
                                  market = "market_2")
 
-jacobian <- getJacobian_wrap(blp_data=nevo_data,
+jacobian_nevo <- getJacobian_wrap(blp_data=nevo_data,
                              par_theta2 = theta_guesses,
                              printLevel = 2)
 
-jacobian[1:5,1:4]
+jacobian_nevo[1:5,1:4]
 
 ```
 

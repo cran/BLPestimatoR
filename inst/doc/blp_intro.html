@@ -12,7 +12,7 @@
 
 <meta name="author" content="Daniel Brunner" />
 
-<meta name="date" content="2018-08-17" />
+<meta name="date" content="2018-09-14" />
 
 <title>BLPestimatoR - Package for Demand Estimation</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">BLPestimatoR - Package for Demand Estimation</h1>
 <h4 class="author"><em>Daniel Brunner</em></h4>
-<h4 class="date"><em>2018-08-17</em></h4>
+<h4 class="date"><em>2018-09-14</em></h4>
 
 
 
@@ -837,11 +837,11 @@ derivatives2 &lt;-<span class="st"> </span><span class="kw">dstddelta_wrap</span
 <span class="co">#&gt;  [1]  0.3302  2.4526  0.0163  0.2441  5.4819 15.8935 -0.2506  1.2650</span>
 <span class="co">#&gt;  [9] -1.2000  0.2037  0.0511 -0.8091  2.6342</span>
 
-jacobian &lt;-<span class="st"> </span><span class="kw">getJacobian_wrap</span>(<span class="dt">blp_data=</span>nevo_data,
+jacobian_nevo &lt;-<span class="st"> </span><span class="kw">getJacobian_wrap</span>(<span class="dt">blp_data=</span>nevo_data,
                              <span class="dt">par_theta2 =</span> theta_guesses,
                              <span class="dt">printLevel =</span> <span class="dv">2</span>)
 
-jacobian[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>]
+jacobian_nevo[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>]
 <span class="co">#&gt;                   unobs_sd*(Intercept) unobs_sd*price unobs_sd*sugar</span>
 <span class="co">#&gt; cereal_1_market_1           -0.1029043     0.05148210      -1.689497</span>
 <span class="co">#&gt; cereal_2_market_1           -0.1941521     0.03483915      -7.935020</span>

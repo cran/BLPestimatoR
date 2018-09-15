@@ -1,11 +1,11 @@
-1feb31492844afb21363d2f18cf55a8f *DESCRIPTION
+cd575afc8bfbce73b50d134f20193312 *DESCRIPTION
 06749fc28f2359ae18ace81f38229174 *NAMESPACE
 b7ba58ccdfd1d05f230f52c8e5016f08 *R/BLP_data.R
 56e8cc97a4f3a85be5598ab910ef0a6b *R/RcppExports.R
 2aa7c3cd9a4391073b6b7993ac6bf4a9 *R/estimateBLP.R
 57f0e51a48b6978954c8fb20be32471a *R/generics.R
 1c597d4946664308bdc822a6d92b2806 *R/get_BLP_dataset.R
-e8a3a1ec3ffe7aaefbd7a3944565d142 *R/get_elasticities.R
+253936e704b8b6cfb3fc6ae8641634cd *R/get_elasticities.R
 683ca83b048cb3951fec32ee41ee1675 *R/gmm.R
 1caec24ca5d90a9874626be5d44f6a06 *R/helperFunctions.R
 e943a09eeba881fd0a01096f975950e1 *R/nevo.R
@@ -16,9 +16,9 @@ faa0aa769dc9ff4fb2df3bda03c7dd2c *build/vignette.rds
 ed3f6708298df902d5cf448abbedc527 *data/productData.rda
 ed01913be0bccfc1fe980473af2f41ec *data/theta_guesses.rda
 b832a15d5b414e84ef583ddd5fc25b59 *data/w_guesses.rda
-e368dd38eea1d3d69c736ebccb8dd073 *inst/doc/blp_intro.R
-a5f3777b3aa7e1f264b227dc5153189e *inst/doc/blp_intro.Rmd
-ae1dc1402ec31888a22567964d1a020f *inst/doc/blp_intro.html
+34f1477f72262658614acae3727c03be *inst/doc/blp_intro.R
+88d2db0d00ca77f749f53b04e32c274d *inst/doc/blp_intro.Rmd
+f8ed88ce749985fcf9fa2e88bb85fddc *inst/doc/blp_intro.html
 4df68cb37404423a6816fa37151e99d0 *man/BLP_data.Rd
 72b9e78d3cd35fdadab561dcd7999009 *man/demographicData.Rd
 2e579ab59f8d4656e10cd76da8dd0b20 *man/dstddelta_wrap.Rd
@@ -38,5 +38,5 @@ f37b813eef9473c5c762bd6f2a8c6799 *man/update_BLP_data.Rd
 61059660eb073d93e00e8ee054237071 *src/Makevars
 61059660eb073d93e00e8ee054237071 *src/Makevars.win
 9543d240b5954ef2ae5c8c93a9279ef5 *src/RcppExports.cpp
-480050d0e1d0d39ca653622eba7b3e49 *src/cppFunctions.cpp
-a5f3777b3aa7e1f264b227dc5153189e *vignettes/blp_intro.Rmd
+a865b3d7f0fa83cb1fcebe50de674158 *src/cppFunctions.cpp
+88d2db0d00ca77f749f53b04e32c274d *vignettes/blp_intro.Rmd
