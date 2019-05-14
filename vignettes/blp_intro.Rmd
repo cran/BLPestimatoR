@@ -70,8 +70,11 @@ This extended documentation demonstrates the steps of a typical demand estimatio
 - showing the results with `summary`
 - view the own- and crosspriceelasticities with `get_elasticities`
 
-The use of the algorithm's building blocks is explained as well. The well-known training data for the cereal market from -@Nevo2001 is used for demonstration purposes.
+The use of the algorithm's building blocks is explained as well. The well-known training data for the cereal market from -@Nevo2001 is used for demonstration purposes. Loading the package is the very first step of the demand estimation:
 
+```{r}
+library(BLPestimatoR)
+```
 
 
 
@@ -92,8 +95,6 @@ overlapping) categories separated by `|`:
 Nevo's model can be translated into the following formula syntax:
   
 ```{r}
-library(BLPestimatoR)
-
 nevos_model <- as.formula("share ~  price + productdummy |
     0+ productdummy |
     price + sugar + mushy |
@@ -153,13 +154,13 @@ named according to the name of a demographic. Each entry contains the following 
 In the cereal example, observed heterogeneity is provided as follows (list names correspond to the demographics):
 
 ```{r}
-demographicData$income[1:4,1:5]
+demographicData$income[1:4, 1:5]
 
-demographicData$incomesq[1:4,1:5]
+demographicData$incomesq[1:4, 1:5]
 
-demographicData$age[1:4,1:5]
+demographicData$age[1:4, 1:5]
 
-demographicData$child[1:4,1:5]
+demographicData$child[1:4, 1:5]
 ```
 
 If demographic input (`demographicData`) is missing, the estimation routine considers only coefficients for unobserved heterogeneity. This can be done by already implemented integration methods via `integration_method` as shown in the estimation section. In Nevo's cereal example however, a specific set of 20 draws is
@@ -208,7 +209,7 @@ The arguments in greater detail:
 each observation to a market
 
 - `product_identifier` gives the name of the variable in `productData` that matches
-each observation to a product (should be unique in a market)
+each observation to a product (must be unique in a market)
 
 - `productData` is given as a dataframe and `demographicData` as a list as described above
 
@@ -238,7 +239,7 @@ The provided set of starting guesses `par_theta2` is matched with formula input 
 - colnames of `par_theta2` must match with list entry names of `demographicData` and a column for unobserved heterogeneity (**must** be named `unobs_sd)
 - `NA`s in `par_theta2` indicate the exclusion from estimation, i.e. the coefficient is assumed to be zero.
  
-These requirements are demonstrated with Nevo's starting guesses:
+These requirements are demonstrated with a set of exemplary starting guesses:
 
 ```{r}
 #before:
@@ -344,11 +345,34 @@ $$\Omega = \begin{pmatrix} \Sigma_1 & 0 &
 The following code demonstrates the calculation of elasticities. 
 
 ```{r}
-get_elasticities(blp_data=nevo_data,
-                 blp_estimation= blp_est,
+# extract parameters from output
+theta1_price <- blp_est$theta_lin["price",]
+theta2 <- matrix(NA , nrow = 4, ncol = 5)
+colnames(theta2) <- c("unobs_sd", "income", "incomesq", "age", "child" )
+rownames(theta2) <- c("(Intercept)", "price" , "sugar", "mushy")
+for( i in 1:13){
+theta2[blp_est$indices[i,1], blp_est$indices[i,2]] <- blp_est$theta_rc[i]
+}
+
+delta_data <- data.frame( "product_id" = nevo_data$parameters$product_id,
+                     "cdid" = nevo_data$parameters$market_id_char_in,
+                     "startingGuessesDelta" = blp_est$delta )
+# always use update_BLP_data() to update data object to maintain consistent data 
+nevo_data <- update_BLP_data(data_update = delta_data, 
+                             blp_data = nevo_data)
+
+shareObj <- getShareInfo(  blp_data=nevo_data, 
+                            par_theta2 = theta2,
+                            printLevel = 1)
+
+
+get_elasticities(blp_data=nevo_data, 
+                 share_info = shareObj, 
+                 theta_lin = theta1_price,
                  variable = "price",
                  products = c("cereal_1","cereal_4"),
                  market = "market_2")
+
 ```
 
 The value of the elasticity matrix in row $j$ and column $i$ for a variable $x$, gives the effect of a change in product $i$'s characteristic $x$ on the share of product $j$.
@@ -361,19 +385,21 @@ In the following, you find an example of the contraction mapping and an evaluati
 
 ```{r}
 
-delta_eval <- getDelta_wrap(  blp_data=nevo_data,
-                              par_theta2 = theta_guesses,
-                              printLevel = 4 )
-
+delta_eval <- getDelta_wrap(
+  blp_data = nevo_data,
+  par_theta2 = theta_guesses,
+  printLevel = 4
+)
 
 productData$startingGuessesDelta[1:6]
 delta_eval$delta[1:6]
 delta_eval$counter
 
-
-gmm <- gmm_obj_wrap(  blp_data=nevo_data,
-                      par_theta2 = theta_guesses,
-                      printLevel = 2)
+gmm <- gmm_obj_wrap(
+  blp_data = nevo_data,
+  par_theta2 = theta_guesses,
+  printLevel = 2
+)
 
 gmm$local_min
 ```
@@ -382,11 +408,13 @@ Printed distances in the contraction mapping are maximum absolute distance betwe
 
 For any $\theta_2$, you can compute predicted shares: 
 ```{r}
-shares <- getShares_wrap(  blp_data=nevo_data,
-                           par_theta2 = theta_guesses, printLevel = 4)
-shares[1:6]
+shareObj <- getShareInfo(  blp_data=nevo_data,
+                           par_theta2 = theta_guesses,
+                           printLevel = 4)
+shareObj$shares[1:6]
 ```
 
+The object contains a list of outputs that are useful for further economic analysis. For example, the list element `sij` contains share probabilities for every individual and needs to be given to calculate elasticities.
 
 
 The gradient contains two important building blocks as explained in the appendix of -@Nevo2001:
@@ -398,19 +426,24 @@ The gradient contains two important building blocks as explained in the appendix
 Both are used to compute the jacobian and are easy to obtain with the package as the following example demonstrates:
 
 ```{r}
-
+# market 2:
 derivatives1 <- dstdtheta_wrap(  blp_data=nevo_data,
-                                 cm_input = delta_eval,
+                                par_theta2 = theta_guesses,
                                  market = "market_2")
 derivatives2 <- dstddelta_wrap(  blp_data=nevo_data,
-                                 cm_input = delta_eval,
+                                par_theta2 = theta_guesses,
                                  market = "market_2")
 
-jacobian_nevo <- getJacobian_wrap(blp_data=nevo_data,
-                             par_theta2 = theta_guesses,
-                             printLevel = 2)
+jac_mkt2 <- -solve(derivatives2)%*%derivatives1
 
-jacobian_nevo[1:5,1:4]
+jac_mkt2[1:5,1:4]
+
+# all markets
+jacobian_nevo <- getJacobian_wrap(blp_data=nevo_data,
+                                 par_theta2 = theta_guesses,
+                                 printLevel = 2)
+
+jacobian_nevo[25:29,1:4] # compare to jac_mkt2
 
 ```
 

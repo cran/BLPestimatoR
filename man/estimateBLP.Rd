@@ -6,7 +6,7 @@
 \usage{
 estimateBLP(blp_data, par_theta2, solver_method = "BFGS",
   solver_maxit = 10000, solver_reltol = 1e-06,
-  standardError = "heteroskedastic", extremumCheck = TRUE,
+  standardError = "heteroskedastic", extremumCheck = FALSE,
   printLevel = 2, ...)
 }
 \arguments{
@@ -22,7 +22,7 @@ estimateBLP(blp_data, par_theta2, solver_method = "BFGS",
 
 \item{standardError}{character specifying assumptions about the GMM residual (homoskedastic , heteroskedastic (default), or cluster)}
 
-\item{extremumCheck}{if \code{TRUE} (default), second derivatives are checked for the existence of minimum at the point estimate,}
+\item{extremumCheck}{if \code{TRUE}, second derivatives are checked for the existence of minimum at the point estimate (default = FALSE),}
 
 \item{printLevel}{level of output information ranges from 0 (no GMM results) to 4 (every norm in the contraction mapping)}
 
@@ -42,7 +42,7 @@ Row names of \code{par_theta2} must match random coefficients as specified in \c
 }
 \examples{
 K<-2 #number of random coefficients
-data <- get_BLP_dataset(nmkt = 25, nbrn = 20,
+data <- simulate_BLP_dataset(nmkt = 25, nbrn = 20,
                         Xlin = c("price", "x1", "x2", "x3", "x4", "x5"),
                         Xexo = c("x1", "x2", "x3", "x4", "x5"),
                         Xrandom = paste0("x",1:K),instruments = paste0("iv",1:10),

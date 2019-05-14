@@ -10,7 +10,7 @@ NULL
 #' @param solver_maxit integer specifying maximum iterations for the optimization routine (default=10000),
 #' @param solver_reltol integer specifying tolerance for the optimization routine (default= 1e-6),
 #' @param standardError character specifying assumptions about the GMM residual (homoskedastic , heteroskedastic (default), or cluster)
-#' @param extremumCheck if \code{TRUE} (default), second derivatives are checked for the existence of minimum at the point estimate,
+#' @param extremumCheck if \code{TRUE}, second derivatives are checked for the existence of minimum at the point estimate (default = FALSE),
 #' @param printLevel level of output information ranges from 0 (no GMM results) to 4 (every norm in the contraction mapping)
 #' @param ... additional arguments for \code{optim}
 
@@ -24,7 +24,7 @@ NULL
 #'
 #' @examples
 #' K<-2 #number of random coefficients
-#' data <- get_BLP_dataset(nmkt = 25, nbrn = 20,
+#' data <- simulate_BLP_dataset(nmkt = 25, nbrn = 20,
 #'                         Xlin = c("price", "x1", "x2", "x3", "x4", "x5"),
 #'                         Xexo = c("x1", "x2", "x3", "x4", "x5"),
 #'                         Xrandom = paste0("x",1:K),instruments = paste0("iv",1:10),
@@ -87,7 +87,7 @@ estimateBLP <- function( blp_data,
                          par_theta2,
                          solver_method = "BFGS", solver_maxit = 10000, solver_reltol = 1e-6,
 
-                         standardError = "heteroskedastic", extremumCheck = TRUE,
+                         standardError = "heteroskedastic", extremumCheck = FALSE,
                          printLevel = 2, ... ) {
 
 
@@ -206,6 +206,12 @@ estimateBLP <- function( blp_data,
   jacob_out <- blp_results$jacobian
   xi_out <- blp_results$xi
 
+  # naming of rc
+  names_rc <- kronecker( start_theta2$final_col_names_par ,
+                         start_theta2$final_row_names_par, paste, sep="*")
+  relevantRcDem_index <- start_theta2$indices[,"row"] +
+    max( start_theta2$indices[,"row"] ) * ( start_theta2$indices[,"col"] - 1 )
+  names(theta_rc_out) <- names_rc[relevantRcDem_index]
 
   ### Post estimation----
 

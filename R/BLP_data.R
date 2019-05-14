@@ -6,10 +6,11 @@ NULL
 #'
 #' @param model the model to be estimated in R's formula syntax,
 #' @param market_identifier character specifying the market identifier (variable name must be included in \code{productData}),
-#' @param product_identifier optional: character specifying the product identifier (variable name must be included in \code{productData}),
-#' @param par_delta optional: numeric vector with starting guesses for the mean utility (variable name must be included in \code{productData}),
+#' @param product_identifier character specifying the product identifier (variable name must be included in \code{productData}),
+#' @param par_delta optional: numeric vector with values for the mean utility (variable name must be included in \code{productData}),
 #' @param group_structure optional: character specifying a group structure for clustered standard erros (variable name must be included in \code{productData}),
-#' @param productData data.frame with product characteristics ,
+#' @param additional_variables optional: character vector specifying variables you want to keep for later analysis (variable names must be included in \code{productData})
+#' @param productData data.frame with product characteristics,
 #' @param demographic_draws optional: list with demographic draws for each market to consider observed heterogeneity (see details),
 #' @param integration_accuracy integer specifying integration accuracy,
 #' @param integration_method character specifying integration method,
@@ -23,12 +24,15 @@ NULL
 #' or \code{demographic_draws} (observed heterogeneity), list entries must be named and contain the variable \code{market_identifier} to allow market matching.
 #' Each line in these list entries contains the draws for one market.
 #' In case of unobserved heterogeneity, list names must match the random coefficients from the model formula.
+#' The \code{par_delta} argument provides the variable name for mean utilitys. For example, in the estimation algorithm these values are used as starting guesses in the contraction mapping.
+#' Another example is the evaluation of the GMM, which is also based on the provided mean utilitys.
+#' If you need to update \code{par_delta} or any other variable in the data object, use \code{update_BLP_data}.
 #'
 #' @return Returns an object of class \code{blp_data}.
 #'
 #' @examples
 #' K<-2 #number of random coefficients
-#' data <- get_BLP_dataset(nmkt = 25, nbrn = 20,
+#' data <- simulate_BLP_dataset(nmkt = 25, nbrn = 20,
 #'                         Xlin = c("price", "x1", "x2", "x3", "x4", "x5"),
 #'                         Xexo = c("x1", "x2", "x3", "x4", "x5"),
 #'                         Xrandom = paste0("x",1:K),instruments = paste0("iv",1:10),
@@ -78,7 +82,7 @@ NULL
 #'
 #' @export
 BLP_data <- function(model,
-                     market_identifier, product_identifier=NULL, par_delta, group_structure = NULL,
+                     market_identifier, product_identifier, par_delta, group_structure = NULL, additional_variables=NULL,
 
                      productData , demographic_draws ,
 
@@ -121,16 +125,15 @@ BLP_data <- function(model,
   market_id_numeric_o <- order(market_id_numeric)
   #numbers in market_id_numeric correspond to order of markets in market_id_char_in: all(unique(market_id_char_in[market_id_numeric_o]) == unique(market_id_char_in))
 
-  if( !is.null(product_identifier)){
-    if(  (!is.character(product_identifier)) || (length(product_identifier)!=1) )
-      stop( "product_identifier is not valid." )
-    product_id_char_in <-  vapply(product_identifier,
-                                  function(x) as.character( get(x, productData) ) ,
-                                  character(nobs))
-  } else{ # automatic naming of products
-    product_id_char_in <- paste0("product",1:nobs)
-    cat("Products are named automatically according to the provided order in productData.\n")
-  }
+
+  if(  !product_identifier %in% names(productData) )
+    stop( "market_identifier is not available in the provided data." )
+  if(  (!is.character(product_identifier)) || (length(product_identifier)!=1) )
+    stop( "product_identifier is not valid." )
+  product_id_char_in <-  vapply(product_identifier,
+                                function(x) as.character( get(x, productData) ) ,
+                                character(nobs))
+
 
   # uniqueness check
   tmp <- table(paste0(market_id_char_in,"_",product_id_char_in))
@@ -166,9 +169,9 @@ BLP_data <- function(model,
   } else delta_error <- FALSE
 
   if( missing_delta || delta_error ){
-    par_delta_var_name <- "not_specified"
+    par_delta_var_name <- "delta"
     par_delta <- rep(0, nobs)
-    cat( "Mean utility is initialized with 0 because of missing or invalid par_delta argument.\n")
+    cat( "Mean utility (variable name: `delta`) is initialized with 0 because of missing or invalid par_delta argument.\n")
   }
 
 
@@ -308,6 +311,20 @@ BLP_data <- function(model,
   Z <- cbind(X_exg, IV)
   Z <- Z[, unique(colnames(Z))] #duplicate variables are suppressed
 
+  ## additional_variables
+  if( !is.null(additional_variables)){
+    additional_data <- data.frame("identifier" = paste0(market_id_char_in,
+                                                        product_id_char_in))
+    for( i in 1:length(additional_variables)){
+      vn_i <- additional_variables[i]
+      if(  !vn_i %in% names(productData) )
+        stop( paste0(vn_i ," is not available in the provided data." ))
+      additional_data[[vn_i]] <- productData[[vn_i]][ market_id_numeric_o ]
+    }
+  }else{
+    additional_data <- NULL
+  }
+
   ## Output
 
   integration<- list('drawsRcMktShape' = draws_mktShape,
@@ -339,7 +356,8 @@ BLP_data <- function(model,
                'shares' = shares,
                'Z' = Z,
                'group_structure'= group_structure,
-               'delta' = par_delta)
+               'delta' = par_delta,
+               'additional_data' = additional_data)
 
   out <- list( call_arguments=call_arguments,
                integration = integration,
@@ -363,7 +381,7 @@ BLP_data <- function(model,
 #'
 #' @examples
 #' K<-2 #number of random coefficients
-#' data <- get_BLP_dataset(nmkt = 25, nbrn = 20,
+#' data <- simulate_BLP_dataset(nmkt = 25, nbrn = 20,
 #'                         Xlin = c("price", "x1", "x2", "x3", "x4", "x5"),
 #'                         Xexo = c("x1", "x2", "x3", "x4", "x5"),
 #'                         Xrandom = paste0("x",1:K),instruments = paste0("iv",1:10),
@@ -471,30 +489,23 @@ update_BLP_data <- function(data_update,
     if(i %in% colnames(blp_data$data$X_lin)){
       blp_data$data$X_lin[,i] <- data_update[[i]]
       cat( paste0("Linear variable ", i ," has been updated.\n"))
-    }
-
-    if(i %in% colnames(blp_data$data$X_exg)){
+    } else if(i %in% colnames(blp_data$data$X_exg)){
       blp_data$data$X_exg[,i] <-  blp_data$data$Z[,i] <- data_update[[i]]
       cat( paste0("Exogenous variable ", i ," has been updated.\n"))
-    }
-
-    if((i %in% colnames(blp_data$data$Z)) && !(i %in% colnames(blp_data$data$X_exg)) ){
+    } else if((i %in% colnames(blp_data$data$Z)) && !(i %in% colnames(blp_data$data$X_exg)) ){
       blp_data$data$Z[,i] <- data_update[[i]]
       cat( paste0("Instrument variable ", i ," has been updated.\n"))
-    }
-
-    if(i %in% colnames(blp_data$data$X_rand)){
+    } else if(i %in% colnames(blp_data$data$X_rand)){
       blp_data$data$X_rand[,i] <- data_update[[i]]
       cat( paste0("Random coefficient variable ", i ," has been updated.\n"))
-      }
-    if(i == blp_data$parameters$share_varname){
+    }else if(i == blp_data$parameters$share_varname){
       blp_data$data$shares <- data_update[[i]]
       cat( paste0("Share variable ", i ," has been updated.\n"))
-    }
-
-    if(i == blp_data$parameters$par_delta_varname)  {
+    }else if(i == blp_data$parameters$par_delta_varname)  {
       blp_data$data$delta<- data_update[[i]]
       cat( paste0("Mean utility variable ", i ," has been updated.\n"))
+    }else{
+      cat( paste0("No updates performed!\n"))
     }
 
   }

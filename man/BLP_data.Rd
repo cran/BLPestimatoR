@@ -4,24 +4,26 @@
 \alias{BLP_data}
 \title{Prepares data and parameters related to the BLP algorithm for estimation.}
 \usage{
-BLP_data(model, market_identifier, product_identifier = NULL, par_delta,
-  group_structure = NULL, productData, demographic_draws,
-  integration_accuracy, integration_method, integration_draws,
-  integration_weights, integration_seed, blp_inner_tol = 1e-09,
-  blp_inner_maxit = 10000)
+BLP_data(model, market_identifier, product_identifier, par_delta,
+  group_structure = NULL, additional_variables = NULL, productData,
+  demographic_draws, integration_accuracy, integration_method,
+  integration_draws, integration_weights, integration_seed,
+  blp_inner_tol = 1e-09, blp_inner_maxit = 10000)
 }
 \arguments{
 \item{model}{the model to be estimated in R's formula syntax,}
 
 \item{market_identifier}{character specifying the market identifier (variable name must be included in \code{productData}),}
 
-\item{product_identifier}{optional: character specifying the product identifier (variable name must be included in \code{productData}),}
+\item{product_identifier}{character specifying the product identifier (variable name must be included in \code{productData}),}
 
-\item{par_delta}{optional: numeric vector with starting guesses for the mean utility (variable name must be included in \code{productData}),}
+\item{par_delta}{optional: numeric vector with values for the mean utility (variable name must be included in \code{productData}),}
 
 \item{group_structure}{optional: character specifying a group structure for clustered standard erros (variable name must be included in \code{productData}),}
 
-\item{productData}{data.frame with product characteristics ,}
+\item{additional_variables}{optional: character vector specifying variables you want to keep for later analysis (variable names must be included in \code{productData})}
+
+\item{productData}{data.frame with product characteristics,}
 
 \item{demographic_draws}{optional: list with demographic draws for each market to consider observed heterogeneity (see details),}
 
@@ -50,10 +52,13 @@ For any form of user provided integration draws, i.e. \code{integration_draws} (
 or \code{demographic_draws} (observed heterogeneity), list entries must be named and contain the variable \code{market_identifier} to allow market matching.
 Each line in these list entries contains the draws for one market.
 In case of unobserved heterogeneity, list names must match the random coefficients from the model formula.
+The \code{par_delta} argument provides the variable name for mean utilitys. For example, in the estimation algorithm these values are used as starting guesses in the contraction mapping.
+Another example is the evaluation of the GMM, which is also based on the provided mean utilitys.
+If you need to update \code{par_delta} or any other variable in the data object, use \code{update_BLP_data}.
 }
 \examples{
 K<-2 #number of random coefficients
-data <- get_BLP_dataset(nmkt = 25, nbrn = 20,
+data <- simulate_BLP_dataset(nmkt = 25, nbrn = 20,
                         Xlin = c("price", "x1", "x2", "x3", "x4", "x5"),
                         Xexo = c("x1", "x2", "x3", "x4", "x5"),
                         Xrandom = paste0("x",1:K),instruments = paste0("iv",1:10),

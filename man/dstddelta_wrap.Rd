@@ -4,14 +4,16 @@
 \alias{dstddelta_wrap}
 \title{Calculates derivatives of all shares with respect to all mean utilities in a given market.}
 \usage{
-dstddelta_wrap(blp_data, cm_input, market)
+dstddelta_wrap(blp_data, par_theta2, market, printLevel = 1)
 }
 \arguments{
 \item{blp_data}{data object created by the function \code{BLP_data},}
 
-\item{cm_input}{contraction mapping object created by the function \code{getDelta_wrap},}
+\item{par_theta2}{matrix with column and rownames providing a starting value for the optimization routine (see details),}
 
-\item{market}{character specifying the market in which derivatives are calculated}
+\item{market}{character specifying the market in which derivatives are calculated,}
+
+\item{printLevel}{level of output information (default = 1)}
 }
 \value{
 Returns a numeric matrix with derivatives.
@@ -20,9 +22,15 @@ Cell in row i and col j is the derivative of share i with respect to mean utilit
 \description{
 Calculates derivatives of all shares with respect to all mean utilities in a given market.
 }
+\details{
+NA's in \code{par_theta2} entries indicate the exclusion from estimation, i.e. the coefficient is assumed to be zero.
+If only unobserved heterogeneity is used (no demographics), the column name of \code{par_theta2} must be "unobs_sd".
+With demographics the colnames must match the names of provided demographics (as in \code{demographic_draws}) and "unobs_sd".
+Row names of \code{par_theta2} must match random coefficients as specified in \code{model}. Constants must be named "(Intercept)".
+}
 \examples{
 K<-2 #number of random coefficients
-data <- get_BLP_dataset(nmkt = 25, nbrn = 20,
+data <- simulate_BLP_dataset(nmkt = 25, nbrn = 20,
                         Xlin = c("price", "x1", "x2", "x3", "x4", "x5"),
                         Xexo = c("x1", "x2", "x3", "x4", "x5"),
                         Xrandom = paste0("x",1:K),instruments = paste0("iv",1:10),
@@ -49,22 +57,11 @@ blp_data <- BLP_data(model = model, market_identifier="cdid",
                      integration_accuracy = 40,
                      integration_seed = 1)
 
-theta_guesses <- matrix(c(0.5,2), nrow=2)
-rownames(theta_guesses) <- c("x1","x2")
-colnames(theta_guesses) <- "unobs_sd"
-
-blp_est <- estimateBLP(blp_data =blp_data,
-                       par_theta2 = theta_guesses,
-                       extremumCheck = FALSE ,
-                       printLevel = 1 )
-summary(blp_est)
-
-delta_eval <- getDelta_wrap(  blp_data=blp_data,
-                              par_theta2 = theta_guesses,
-                              printLevel = 4)
+theta2 <- matrix(c(0.5,2), nrow=2)
+rownames(theta2) <- c("x1","x2")
+colnames(theta2) <- "unobs_sd"
 
 derivatives2 <- dstddelta_wrap(  blp_data=blp_data,
-                                 cm_input = delta_eval,
+                                  par_theta2 = theta2,
                                  market = 2)
-
 }

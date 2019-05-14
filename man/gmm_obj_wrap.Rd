@@ -32,7 +32,7 @@ Row names of \code{par_theta2} must match random coefficients as specified in \c
 }
 \examples{
 K<-2 #number of random coefficients
-data <- get_BLP_dataset(nmkt = 25, nbrn = 20,
+data <- simulate_BLP_dataset(nmkt = 25, nbrn = 20,
                         Xlin = c("price", "x1", "x2", "x3", "x4", "x5"),
                         Xexo = c("x1", "x2", "x3", "x4", "x5"),
                         Xrandom = paste0("x",1:K),instruments = paste0("iv",1:10),

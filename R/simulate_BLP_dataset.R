@@ -68,7 +68,7 @@ NULL
 #'
 #' @examples
 #' K<-2 #number of random coefficients
-# example_data <- get_BLP_dataset(nmkt = 25,
+# example_data <- simulate_BLP_dataset(nmkt = 25,
 #                                 nbrn = 20,
 #                                 Xlin = c("price", "x1", "x2", "x3", "x4", "x5"),
 #                                 Xexo = c("x1", "x2", "x3", "x4", "x5"),
@@ -85,7 +85,7 @@ NULL
 #                                 printlevel = 0, seed = 234234 )
 #'
 #' @export
-get_BLP_dataset <- function( nmkt, nbrn,
+simulate_BLP_dataset <- function( nmkt, nbrn,
                              Xlin, Xexo, Xrandom, instruments,
                              true.parameters = list(),
                              price.endogeneity = list( mean.xi = -2,

@@ -166,8 +166,6 @@ List getDelta( const NumericMatrix &theta2,
 
   int nprodt;
   int startpos;
-  double current_max;
-  double current_dist;
 
   // input check delta:
   if( any( is_na( deltaOld ) ) | any( is_nan( deltaOld ) ) ) {
@@ -176,96 +174,71 @@ List getDelta( const NumericMatrix &theta2,
     }
   }
 
-
-  // calc. the individual part of utility
+  // calc. first part of utility
   expMu = getExpMu( theta2,
                     nodesRcMktShape,
                     Xrandom,
                     cdid,
                     nodesDemMktShape) ;
 
-
   // start of the contraction mapping
-  if( printLevel == 4 ){
-    Rcpp::Rcout << "----------------------" << std::endl ;
-  }
+  if( printLevel == 4 )  Rcpp::Rcout << "----------------------" << std::endl ;
 
   while( (dist > innerCrit) & (counter < innerMaxit) ){
     counter++;
+    for( int i=0; i<nmkt; i++){
 
-   for( int i=0; i<nmkt; i++){
+      if( market_convergence[i] == 1 )  continue ;
+      nprodt = cdindex[i+1]-cdindex[i] ;
+      startpos = cdindex[i]+1;
 
-    if( market_convergence[i] == 1 ){
-      continue ;
+      // calc. sjt_mod: (_mod because of skipped delta multiplication)
+      NumericVector sjt_mod(nprodt);
+      sjt_mod = getSjtMod(  expMu,
+                            expDeltaStart,
+                            nprodt,
+                            startpos,
+                            weights );
+
+      // update delta(I):
+      for( int j=0; j<nprodt; j++){
+        expDeltaNew[startpos+(j-1)] = obsshare[startpos+(j-1)] / sjt_mod[j];
       }
 
-    nprodt = cdindex[i+1]-cdindex[i] ;
-    startpos = cdindex[i]+1;
+      //Handling of negative shares for quadrature
+      if( negWeights ) {
+        if( Rcpp::min(sjt_mod) < 0 ){ //if( any( shMod < 0 ).is_true() ) {
+          if( !negShares ){
+            Rcpp::Rcout << "Integration rule produced negative shares --> reset delta to 0" ;
+            negShares = TRUE ;
+          }
+          Rcpp::Rcout << "." ;
 
-   // calc. sjt_mod: (_mod because of skipped delta multiplication)
-   NumericVector sjt_mod(nprodt);
-   sjt_mod = getSjtMod(  expMu,
-                         expDeltaStart,
-                         nprodt,
-                         startpos,
-                         weights );
-
-    // update delta(I):
-    for( int j=0; j<nprodt; j++){
-      expDeltaNew[startpos+(j-1)] = obsshare[startpos+(j-1)] / sjt_mod[j];
-    }
-
-    //Handling of negative shares for quadrature
-    if( negWeights ) {
-      if( Rcpp::min(sjt_mod) < 0 ){ //if( any( shMod < 0 ).is_true() ) {
-        if( !negShares ){
-          Rcpp::Rcout << "Integration rule produced negative shares --> reset delta to 0" ;
-          negShares = TRUE ;
-        }
-        Rcpp::Rcout << "." ;
-
-        for(int negInd = 0; negInd < nprodt; negInd++) {
-          if( sjt_mod[negInd] < 0 ){
-            expDeltaNew[startpos + (negInd-1) ] = 1;
+          for(int negInd = 0; negInd < nprodt; negInd++) {
+            if( sjt_mod[negInd] < 0 ){
+              expDeltaNew[startpos + (negInd-1) ] = 1;
+            }
           }
         }
-      }
-    } //end negWeights
-    //end negWeights
+      } //end negWeights
 
-    // update delta(II):
-      // init maximum value with first difference in a market:
-      current_max = std::abs( expDeltaNew[startpos-1] - expDeltaStart[startpos-1] );
+      // update delta(II):
+      dist_m[i] = Rcpp::max(  Rcpp::abs( expDeltaNew  - expDeltaStart ));
 
-      // search max distance between old and new delta
+      // 1 indicates that market converged
+      if( dist_m[i] < innerCrit) market_convergence[i] = 1;
+
+      // avoids pointers and creates a deep copy:
       for( int j=0; j<nprodt; j++){
-        current_dist = std::abs(expDeltaNew[startpos+(j-1)]  - expDeltaStart[startpos+(j-1)]) ;
-        if( current_dist > current_max ){
-          current_max = current_dist;
-        }
+        expDeltaStart[startpos+(j-1)] = expDeltaNew[startpos+(j-1)];
       }
+    } // end market loop
 
-      if( current_max < innerCrit){
-        market_convergence[i] = 1; // 1 indicates that market converged
-      }
+    dist = Rcpp::max(dist_m);
 
-      dist_m[i] = current_max ;
-
-
-     // avoids pointers and creates a deep copy:
-    for( int j=0; j<nprodt; j++){
-      expDeltaStart[startpos+(j-1)] = expDeltaNew[startpos+(j-1)];
-    }
-
-   } // end market loop
-   dist = Rcpp::max(dist_m);
-
-    if( printLevel == 4 ){
-      Rcpp::Rcout << "\t dist: "  << dist << std::endl ;
-    }
-
-
+    if( printLevel == 4 ) Rcpp::Rcout << "\t dist: "  << dist << std::endl ;
   }// end while
+
 
   if( negShares ) Rcpp::Rcout << std::endl ;
 
@@ -291,7 +264,6 @@ List getDelta( const NumericMatrix &theta2,
   ret["negShares"] = negShares;
   return ret ;
 }
-
 
 // [[Rcpp::export]]
 arma::mat dstddelta_c( arma::mat &sijt,
@@ -321,7 +293,7 @@ arma::mat dstdtheta_c(arma::mat &sijt_arma,
   int numProdt = xt_arma.n_rows;
   int K = xt_arma.n_cols;
   int total_parameter = indices.nrow();
-  int total_demographics = max( indices(_,1) ) -1;
+  //int total_demographics = max( indices(_,1) ) -1;
   int amountNodes = qvt_arma.n_cols / K;
 
 
@@ -352,13 +324,13 @@ arma::mat dstdtheta_c(arma::mat &sijt_arma,
     arma::vec row_indices = indices(_, 0);
     arma::vec col_indices = indices(_, 1);
 
-    // get rows of "indices" that belong die random coefficient i
+    // get rows of "indices" that belong to random coefficient i
     arma::uvec row_indices_i = arma::find( row_indices == (i+1) );
 
-    // Optimierungspotential: kann außerhalb der Funktion passieren:
-
-    // check column indizes for random coef. i for 0 (=first column)
+    // check column indizes for random coef. i for 1 (=first column index in R)
     bool with_unobs_het_i = min( col_indices( row_indices_i ) ) == 1;
+    // check column indizes for random coef. i for values > 1: interaction with demogr.
+    bool with_obs_het_i = max( col_indices( row_indices_i ) ) > 1;
 
     xti_arma =  xt_arma.col(i);
     arma::mat sumterm_arma = trans( xti_arma ) * sijt_arma;    // (m=product)  for every person i (in cols)
@@ -378,7 +350,7 @@ arma::mat dstdtheta_c(arma::mat &sijt_arma,
     }
 
     // Demographics:
-    if( total_demographics > 0 ){
+    if( with_obs_het_i ){
       int relevantDemographic_ij;
       int startDem;
 

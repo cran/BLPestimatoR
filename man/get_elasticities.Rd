@@ -4,18 +4,23 @@
 \alias{get_elasticities}
 \title{Calculates elasticities for a given variable and market.}
 \usage{
-get_elasticities(blp_data, blp_estimation, variable, products, market)
+get_elasticities(blp_data, share_info, theta_lin, variable, products,
+  market, printLevel = 1)
 }
 \arguments{
 \item{blp_data}{data object created by the function \code{BLP_data},}
 
-\item{blp_estimation}{estimation object created by the function \code{estimateBLP},}
+\item{share_info}{object with individual and aggregated choice probabilities created by the function \code{getShareInfo},}
+
+\item{theta_lin}{linear parameter of the variable for which elasticities are calculated for,}
 
 \item{variable}{character specifying a variable for which elasticities are calculated for,}
 
 \item{products}{optional: character vector of specific products,}
 
 \item{market}{character specifying the market in which elasticities are calculated}
+
+\item{printLevel}{level of output information (default = 1)}
 }
 \value{
 Returns a matrix with elasticities. Value in row j and col i for a variable x,
@@ -26,19 +31,19 @@ Calculates elasticities for a given variable and market.
 }
 \examples{
 K<-2 #number of random coefficients
-data <- get_BLP_dataset(nmkt = 25, nbrn = 20,
-                        Xlin = c("price", "x1", "x2", "x3", "x4", "x5"),
-                        Xexo = c("x1", "x2", "x3", "x4", "x5"),
-                        Xrandom = paste0("x",1:K),instruments = paste0("iv",1:10),
-                        true.parameters = list(Xlin.true.except.price = rep(0.2,5),
-                                               Xlin.true.price = -0.2,
-                                               Xrandom.true = rep(2,K),
-                                               instrument.effects = rep(2,10),
-                                               instrument.Xexo.effects = rep(1,5)),
-                        price.endogeneity = list( mean.xi = -2,
-                                                  mean.eita = 0,
-                                                  cov = cbind( c(1,0.7), c(0.7,1))),
-                        printlevel = 0, seed = 234234 )
+data <- simulate_BLP_dataset(nmkt = 25, nbrn = 20,
+                             Xlin = c("price", "x1", "x2", "x3", "x4", "x5"),
+                             Xexo = c("x1", "x2", "x3", "x4", "x5"),
+                             Xrandom = paste0("x",1:K),instruments = paste0("iv",1:10),
+                             true.parameters = list(Xlin.true.except.price = rep(0.2,5),
+                                                    Xlin.true.price = -0.2,
+                                                    Xrandom.true = rep(2,K),
+                                                    instrument.effects = rep(2,10),
+                                                    instrument.Xexo.effects = rep(1,5)),
+                             price.endogeneity = list( mean.xi = -2,
+                                                       mean.eita = 0,
+                                                       cov = cbind( c(1,0.7), c(0.7,1))),
+                             printlevel = 0, seed = 234234 )
 
 
 model <- as.formula("shares ~  price + x1 + x2 + x3 + x4 + x5 |
@@ -57,17 +62,16 @@ theta_guesses <- matrix(c(0.5,2), nrow=2)
 rownames(theta_guesses) <- c("x1","x2")
 colnames(theta_guesses) <- "unobs_sd"
 
-blp_est <- estimateBLP(blp_data =blp_data,
-                       par_theta2 = theta_guesses,
-                       extremumCheck = FALSE ,
-                       printLevel = 1 )
-summary(blp_est)
+shareObj <- getShareInfo(  blp_data=blp_data,
+                           par_theta2 = theta_guesses,
+                           printLevel = 1)
 
 
 get_elasticities(blp_data=blp_data,
-                 blp_estimation= blp_est,
+                 share_info = shareObj ,
+                 theta_lin = 1,
                  variable = "price",
-                 products = c("product4","product20"),
+                 products = c("4","20"),
                  market = 1)
 
 }

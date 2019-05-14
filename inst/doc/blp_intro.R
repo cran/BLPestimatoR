@@ -7,6 +7,7 @@ knitr::opts_chunk$set(
 ## ------------------------------------------------------------------------
 library(BLPestimatoR)
 
+## ------------------------------------------------------------------------
 nevos_model <- as.formula("share ~  price + productdummy |
     0+ productdummy |
     price + sugar + mushy |
@@ -17,13 +18,13 @@ nevos_model <- as.formula("share ~  price + productdummy |
 head(productData)
 
 ## ------------------------------------------------------------------------
-demographicData$income[1:4,1:5]
+demographicData$income[1:4, 1:5]
 
-demographicData$incomesq[1:4,1:5]
+demographicData$incomesq[1:4, 1:5]
 
-demographicData$age[1:4,1:5]
+demographicData$age[1:4, 1:5]
 
-demographicData$child[1:4,1:5]
+demographicData$child[1:4, 1:5]
 
 ## ------------------------------------------------------------------------
 originalDraws$constant[1:4,1:5]
@@ -85,48 +86,79 @@ blp_est2 <- estimateBLP( blp_data=nevo_data2, printLevel = 1 )
 summary(blp_est2) 
 
 ## ------------------------------------------------------------------------
-get_elasticities(blp_data=nevo_data,
-                 blp_estimation= blp_est,
+# extract parameters from output
+theta1_price <- blp_est$theta_lin["price",]
+theta2 <- matrix(NA , nrow = 4, ncol = 5)
+colnames(theta2) <- c("unobs_sd", "income", "incomesq", "age", "child" )
+rownames(theta2) <- c("(Intercept)", "price" , "sugar", "mushy")
+for( i in 1:13){
+theta2[blp_est$indices[i,1], blp_est$indices[i,2]] <- blp_est$theta_rc[i]
+}
+
+delta_data <- data.frame( "product_id" = nevo_data$parameters$product_id,
+                     "cdid" = nevo_data$parameters$market_id_char_in,
+                     "startingGuessesDelta" = blp_est$delta )
+# always use update_BLP_data() to update data object to maintain consistent data 
+nevo_data <- update_BLP_data(data_update = delta_data, 
+                             blp_data = nevo_data)
+
+shareObj <- getShareInfo(  blp_data=nevo_data, 
+                            par_theta2 = theta2,
+                            printLevel = 1)
+
+
+get_elasticities(blp_data=nevo_data, 
+                 share_info = shareObj, 
+                 theta_lin = theta1_price,
                  variable = "price",
                  products = c("cereal_1","cereal_4"),
                  market = "market_2")
 
+
 ## ------------------------------------------------------------------------
 
-delta_eval <- getDelta_wrap(  blp_data=nevo_data,
-                              par_theta2 = theta_guesses,
-                              printLevel = 4 )
-
+delta_eval <- getDelta_wrap(
+  blp_data = nevo_data,
+  par_theta2 = theta_guesses,
+  printLevel = 4
+)
 
 productData$startingGuessesDelta[1:6]
 delta_eval$delta[1:6]
 delta_eval$counter
 
-
-gmm <- gmm_obj_wrap(  blp_data=nevo_data,
-                      par_theta2 = theta_guesses,
-                      printLevel = 2)
+gmm <- gmm_obj_wrap(
+  blp_data = nevo_data,
+  par_theta2 = theta_guesses,
+  printLevel = 2
+)
 
 gmm$local_min
 
 ## ------------------------------------------------------------------------
-shares <- getShares_wrap(  blp_data=nevo_data,
-                           par_theta2 = theta_guesses, printLevel = 4)
-shares[1:6]
+shareObj <- getShareInfo(  blp_data=nevo_data,
+                           par_theta2 = theta_guesses,
+                           printLevel = 4)
+shareObj$shares[1:6]
 
 ## ------------------------------------------------------------------------
-
+# market 2:
 derivatives1 <- dstdtheta_wrap(  blp_data=nevo_data,
-                                 cm_input = delta_eval,
+                                par_theta2 = theta_guesses,
                                  market = "market_2")
 derivatives2 <- dstddelta_wrap(  blp_data=nevo_data,
-                                 cm_input = delta_eval,
+                                par_theta2 = theta_guesses,
                                  market = "market_2")
 
-jacobian_nevo <- getJacobian_wrap(blp_data=nevo_data,
-                             par_theta2 = theta_guesses,
-                             printLevel = 2)
+jac_mkt2 <- -solve(derivatives2)%*%derivatives1
 
-jacobian_nevo[1:5,1:4]
+jac_mkt2[1:5,1:4]
+
+# all markets
+jacobian_nevo <- getJacobian_wrap(blp_data=nevo_data,
+                                 par_theta2 = theta_guesses,
+                                 printLevel = 2)
+
+jacobian_nevo[25:29,1:4] # compare to jac_mkt2
 
 

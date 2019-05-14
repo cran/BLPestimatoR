@@ -4,14 +4,14 @@
 \alias{getDelta_wrap}
 \title{Performs a contration mapping for a given set of non-linear parameters.}
 \usage{
-getDelta_wrap(blp_data, par_theta2, printLevel = 4)
+getDelta_wrap(blp_data, par_theta2, printLevel = 1)
 }
 \arguments{
 \item{blp_data}{data object created by the function \code{BLP_data},}
 
 \item{par_theta2}{matrix with column and rownames providing a starting value for the optimization routine (see details),}
 
-\item{printLevel}{level of output information ranges from 1 (no GMM results) to 4 (every norm in the contraction mapping)}
+\item{printLevel}{level of output information (default = 1)}
 }
 \value{
 Returns an object of class "blp_cm" with results from the contraction mapping.
@@ -33,7 +33,7 @@ Starting guesses for the contraction mapping are provided with \code{BLP_data}.
 }
 \examples{
 K<-2 #number of random coefficients
-data <- get_BLP_dataset(nmkt = 25, nbrn = 20,
+data <- simulate_BLP_dataset(nmkt = 25, nbrn = 20,
                         Xlin = c("price", "x1", "x2", "x3", "x4", "x5"),
                         Xexo = c("x1", "x2", "x3", "x4", "x5"),
                         Xrandom = paste0("x",1:K),instruments = paste0("iv",1:10),
