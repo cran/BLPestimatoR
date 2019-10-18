@@ -81,6 +81,7 @@ NULL
 #' @importFrom mvQuad getNodes
 #' @importFrom numDeriv hessian
 #' @importFrom randtoolbox halton
+#' @importFrom Matrix Diagonal
 #'
 #' @export
 estimateBLP <- function( blp_data,
@@ -236,10 +237,11 @@ estimateBLP <- function( blp_data,
 
   if( standardError == "heteroskedastic") { # default
     cat("Using the heteroskedastic asymptotic variance-covariance matrix... \n")
-    omega <- diag( diag( xi_out %*% t(xi_out) ) )
-    b<- t(Z) %*% omega %*% Z
+    #omega <- diag( diag( xi_out %*% t(xi_out) ) )
+    #b<- t(Z) %*% omega %*% Z
+    omega <- xi_out^2
+    b<- as.matrix(t(Z) %*% Diagonal(length(omega),omega) %*% Z)
     COV <- tmpSE %*% a %*% W %*% b %*% W %*% t(a) %*% tmpSE
-
   }
   if( standardError == "homoskedastic") {
     cat("Using the homoskedastic asymptotic variance-covariance matrix... \n")
@@ -278,7 +280,7 @@ estimateBLP <- function( blp_data,
                                  blp_data=blp_data,
                                  printLevel = 0))
     hessianEig <- eigen(hessian)$values
-    isMin_out <- sum(hessianEig > 0) == (K)
+    isMin_out <- sum(hessianEig > 0) == start_theta2$total_par
     isMin_out <- if(isMin_out) 'positive' else 'negative'
     cat( paste( "Extremum Check:" , isMin_out))
   } else {

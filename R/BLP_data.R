@@ -178,16 +178,18 @@ BLP_data <- function(model,
   # linear data
   f2 <- formula(formula, lhs = 0, rhs = 1)
   X_lin <- model.matrix( f2 , productData)
-  tmp <- apply( X_lin, 2, function(x) round( sum(abs(diff(x))), 3) == 0 )
-  if( sum(tmp) > 1)
+  tmp <- apply(X_lin, 2, function(x) round(sum(abs(diff(x))),
+                                           3) == 0)
+  if (sum(tmp) > 1)
     stop("Do not include a column of constants. Constants are used by default and can be omitted in the formula.")
 
   # exogenous data
   if( model_rhs_length >= 2){
     f3 <- formula(formula, lhs = 0, rhs = 2)
     X_exg <- model.matrix( f3 , productData)
-    tmp <- apply( X_exg, 2, function(x) round( sum(abs(diff(x))), 3) == 0 )
-    if( sum(tmp) > 1)
+    tmp <- apply(X_exg, 2, function(x) round(sum(abs(diff(x))),
+                                             3) == 0)
+    if (sum(tmp) > 1)
       stop("Do not include a column of constants. Constants are used by default and can be omitted in the formula.")
   } else X_exg <- NULL
 
@@ -196,8 +198,9 @@ BLP_data <- function(model,
     f4 <- formula(formula, lhs = 0, rhs = 3)
     X_rand <- model.matrix( f4 , productData)
     K <- dim(X_rand)[2]
-    tmp <- apply( X_rand, 2, function(x) round( sum(abs(diff(x))), 3) == 0 )
-    if( sum(tmp) > 1)
+    tmp <- apply(X_rand, 2, function(x) round(sum(abs(diff(x))),
+                                              3) == 0)
+    if (sum(tmp) > 1)
       stop("Do not include a column of constants. Constants are used by default and can be omitted in the formula.")
   } else X_rand <- NULL
 
@@ -205,16 +208,13 @@ BLP_data <- function(model,
   if( model_rhs_length >= 4 ){
     f5 <- formula(formula, lhs = 0, rhs = 4)
     IV <- model.matrix( f5, productData )
-    tmp <- apply( IV, 2, function(x) round( sum(abs(diff(x))), 3) == 0 )
-    if( sum(tmp) > 1)
+    tmp <- apply(IV, 2, function(x) round(sum(abs(diff(x))),
+                                          3) == 0)
+    if (sum(tmp) > 1)
       stop("Do not include a column of constants. Constants are used by default and can be omitted in the formula.")
-
-  } else IV <- NULL
+   } else IV <- NULL
 
   #### Data preparation----
-
-
-
 
   ### integration I: normaly distributed RC
 

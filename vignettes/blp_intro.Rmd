@@ -39,6 +39,18 @@ references:
   issued: 
     year: 2017
     
+- id: KM2014
+  title: 'Estimation of Random-Coefficient Demand Models: Two Empiricists Perspective'
+  author: 
+  - family: Knittel
+    given: Christopher
+  - family: Metaxoglou
+    given: Konstantinos
+  container-title: The Review of Economics and Statistics
+  type: article-journal
+  issued: 
+    year: 2014
+    
 - id: Nevo2001
   title: A Practitioner's Guide to Estimation of Random-Coefficients Logit Models of Demand
   author: 
@@ -48,7 +60,6 @@ references:
   type: article-journal
   issued: 
     year: 2001
-    
 ---
 
 ```{r setup, include = FALSE}
@@ -61,7 +72,7 @@ knitr::opts_chunk$set(
 
 # Intro
 
-`BLPestimatoR` provides an efficient estimation algorithm to perform the demand estimation described in -@BLP1995. The routine uses analytic gradients and offers a large number of optimization routines and implemented integration methods as discussed in -@Brunner2017.
+`BLPestimatoR` provides an efficient estimation algorithm to perform the demand estimation described in @BLP1995. The routine uses analytic gradients and offers a large number of optimization routines and implemented integration methods as discussed in @Brunner2017.
 
 This extended documentation demonstrates the steps of a typical demand estimation with the package:
 
@@ -69,8 +80,9 @@ This extended documentation demonstrates the steps of a typical demand estimatio
 - estimate the parameters with `estimate_BLP`
 - showing the results with `summary`
 - view the own- and crosspriceelasticities with `get_elasticities`
+- perform a hypothetical merger analysis 
 
-The use of the algorithm's building blocks is explained as well. The well-known training data for the cereal market from -@Nevo2001 is used for demonstration purposes. Loading the package is the very first step of the demand estimation:
+For this purpose the well-known training datasets for the cereal market [@Nevo2001] and the car market [@BLP1995] are included in the package. Loading the package is therefore the very first step of the demand estimation:
 
 ```{r}
 library(BLPestimatoR)
@@ -92,7 +104,7 @@ overlapping) categories separated by `|`:
  - random coefficients
  - instruments
  
-Nevo's model can be translated into the following formula syntax:
+The first part of this documentation starts with the cereal data example from @Nevo2001. Nevo's model can be translated into the following formula syntax:
   
 ```{r}
 nevos_model <- as.formula("share ~  price + productdummy |
@@ -135,7 +147,7 @@ A variable that uniquely identifies a product in a market (`product_identifier`)
 In the cereal example, this gives the following dataframe:
 
 ```{r}
-head(productData)
+head(productData_cereal)
 ```
 
 
@@ -154,29 +166,29 @@ named according to the name of a demographic. Each entry contains the following 
 In the cereal example, observed heterogeneity is provided as follows (list names correspond to the demographics):
 
 ```{r}
-demographicData$income[1:4, 1:5]
+demographicData_cereal$income[1:4, 1:5]
 
-demographicData$incomesq[1:4, 1:5]
+demographicData_cereal$incomesq[1:4, 1:5]
 
-demographicData$age[1:4, 1:5]
+demographicData_cereal$age[1:4, 1:5]
 
-demographicData$child[1:4, 1:5]
+demographicData_cereal$child[1:4, 1:5]
 ```
 
 If demographic input (`demographicData`) is missing, the estimation routine considers only coefficients for unobserved heterogeneity. This can be done by already implemented integration methods via `integration_method` as shown in the estimation section. In Nevo's cereal example however, a specific set of 20 draws is
 given. For this situation, draws are also provided as a list (list names correspond to the formula's random coefficients and each list entry has a variable `market_identifier`):
 
 ```{r}
-originalDraws$constant[1:4,1:5]
+originalDraws_cereal$constant[1:4, 1:5]
 
 # renaming constants:
-names(originalDraws)[1] <- "(Intercept)"
+names(originalDraws_cereal)[1] <- "(Intercept)"
 
-originalDraws$price[1:4,1:5]
+originalDraws_cereal$price[1:4, 1:5]
 
-originalDraws$sugar[1:4,1:5]
+originalDraws_cereal$sugar[1:4, 1:5]
 
-originalDraws$mushy[1:4,1:5]
+originalDraws_cereal$mushy[1:4, 1:5]
 ```
 
 As demonstrated above, list entries for draws of constants **must** be named `(Intercept)`. Other names of list entries must match the random coefficients specified in the formula.
@@ -187,17 +199,19 @@ As demonstrated above, list entries for draws of constants **must** be named `(I
 Calling `BLP_data` structures and prepares the data for estimation and creates the data object:
 
 ```{r }
-productData$startingGuessesDelta  <- c( log(w_guesses)) # include orig. draws in the product data
+productData_cereal$startingGuessesDelta <- c(log(w_guesses_cereal)) # include orig. draws in the product data
 
-nevo_data <- BLP_data(model = nevos_model,
-                      market_identifier="cdid",
-                      par_delta = "startingGuessesDelta",
-                      product_identifier = "product_id",
-                      productData = productData,
-                      demographic_draws = demographicData,
-                      blp_inner_tol = 1e-6, blp_inner_maxit = 5000,
-                      integration_draws = originalDraws, 
-                      integration_weights= rep(1/20,20))
+cereal_data <- BLP_data(
+  model = nevos_model,
+  market_identifier = "cdid",
+  par_delta = "startingGuessesDelta",
+  product_identifier = "product_id",
+  productData = productData_cereal,
+  demographic_draws = demographicData_cereal,
+  blp_inner_tol = 1e-6, blp_inner_maxit = 5000,
+  integration_draws = originalDraws_cereal,
+  integration_weights = rep(1 / 20, 20)
+)
 ```
 
 
@@ -242,14 +256,14 @@ The provided set of starting guesses `par_theta2` is matched with formula input 
 These requirements are demonstrated with a set of exemplary starting guesses:
 
 ```{r}
-#before:
-theta_guesses
-theta_guesses[theta_guesses==0] <- NA 
-colnames(theta_guesses) <- c("unobs_sd", "income", "incomesq", "age", "child" )
-rownames(theta_guesses) <- c("(Intercept)", "price" , "sugar", "mushy")
+# before:
+theta_guesses_cereal
+theta_guesses_cereal[theta_guesses_cereal == 0] <- NA
+colnames(theta_guesses_cereal) <- c("unobs_sd", "income", "incomesq", "age", "child")
+rownames(theta_guesses_cereal) <- c("(Intercept)", "price", "sugar", "mushy")
 
 # correctly named:
-theta_guesses
+theta_guesses_cereal
 ```
 
 
@@ -259,15 +273,16 @@ theta_guesses
 The following code performs the demand estimation:
 
 ```{r}
+cereal_est <- estimateBLP(
+  blp_data = cereal_data,
+  par_theta2 = theta_guesses_cereal,
+  solver_method = "BFGS", solver_maxit = 1000, solver_reltol = 1e-6,
+  standardError = "heteroskedastic",
+  extremumCheck = FALSE,
+  printLevel = 1
+)
 
-blp_est <- estimateBLP( blp_data=nevo_data,
-                        par_theta2 = theta_guesses,
-                        solver_method = "BFGS", solver_maxit = 1000, solver_reltol = 1e-6,
-                        standardError = "heteroskedastic",
-                        extremumCheck = FALSE ,
-                        printLevel = 1 )
-
-summary(blp_est)
+summary(cereal_est)
 ```
 
 
@@ -295,17 +310,19 @@ minimum of necessary arguments with an automatic generation of integration
 draws and just unobserved heterogeneity. The summary output informs you about the most important default values.
 
 ```{r} 
-nevo_data2 <- BLP_data(model = nevos_model,
-                      market_identifier="cdid",
-                     
-                      product_identifier = "product_id",
-                      productData = productData,
-                      integration_method = "MLHS", 
-                      integration_accuracy = 20, integration_seed = 213)
+cereal_data2 <- BLP_data(
+  model = nevos_model,
+  market_identifier = "cdid",
 
-blp_est2 <- estimateBLP( blp_data=nevo_data2, printLevel = 1 )
+  product_identifier = "product_id",
+  productData = productData_cereal,
+  integration_method = "MLHS",
+  integration_accuracy = 20, integration_seed = 213
+)
 
-summary(blp_est2) 
+cereal_est2 <- estimateBLP(blp_data = cereal_data2, printLevel = 1)
+
+summary(cereal_est2)
 ```
 
 # Postestimation
@@ -329,7 +346,7 @@ $$\Omega = \begin{pmatrix} \sigma_1 & 0 &
 0 & 0 & 0 & \sigma_N \\ \end{pmatrix}$$
 
 
-- option `cluster` allows for cluster individual variance covariance matrizes in each of $M$ cluster groups. For this option the argument `group_structure` needs to be specified in the function `BLP_data` to determine the cluster group. This gives the block-diagonal form with $\Sigma_m$ as the variance covariance matrix for all $\xi_i$ in cluster $m$:
+- option `cluster` allows for cluster individual variance covariance matrices in each of $M$ cluster groups. For this option the argument `group_structure` needs to be specified in the function `BLP_data` to determine the cluster group. This gives the block-diagonal form with $\Sigma_m$ as the variance covariance matrix for all $\xi_i$ in cluster $m$:
 
 $$\Omega = \begin{pmatrix} \Sigma_1 & 0 &
 \dots & 0\\
@@ -339,40 +356,45 @@ $$\Omega = \begin{pmatrix} \Sigma_1 & 0 &
 
 
 
-
 ## Elasticities 
 
-The following code demonstrates the calculation of elasticities. 
+The following code demonstrates the calculation of elasticities for the estimation object `cereal_est`. 
 
 ```{r}
 # extract parameters from output
-theta1_price <- blp_est$theta_lin["price",]
-theta2 <- matrix(NA , nrow = 4, ncol = 5)
-colnames(theta2) <- c("unobs_sd", "income", "incomesq", "age", "child" )
-rownames(theta2) <- c("(Intercept)", "price" , "sugar", "mushy")
-for( i in 1:13){
-theta2[blp_est$indices[i,1], blp_est$indices[i,2]] <- blp_est$theta_rc[i]
+theta1_price <- cereal_est$theta_lin["price", ]
+theta2 <- matrix(NA, nrow = 4, ncol = 5)
+colnames(theta2) <- c("unobs_sd", "income", "incomesq", "age", "child")
+rownames(theta2) <- c("(Intercept)", "price", "sugar", "mushy")
+for (i in 1:13) {
+  theta2[cereal_est$indices[i, 1], cereal_est$indices[i, 2]] <- cereal_est$theta_rc[i]
 }
 
-delta_data <- data.frame( "product_id" = nevo_data$parameters$product_id,
-                     "cdid" = nevo_data$parameters$market_id_char_in,
-                     "startingGuessesDelta" = blp_est$delta )
-# always use update_BLP_data() to update data object to maintain consistent data 
-nevo_data <- update_BLP_data(data_update = delta_data, 
-                             blp_data = nevo_data)
+delta_data <- data.frame(
+  "product_id" = cereal_data$parameters$product_id,
+  "cdid" = cereal_data$parameters$market_id_char_in,
+  "startingGuessesDelta" = cereal_est$delta
+)
+# always use update_BLP_data() to update data object to maintain consistent data
+cereal_data <- update_BLP_data(
+  data_update = delta_data,
+  blp_data = cereal_data
+)
 
-shareObj <- getShareInfo(  blp_data=nevo_data, 
-                            par_theta2 = theta2,
-                            printLevel = 1)
+shareObj <- getShareInfo(
+  blp_data = cereal_data,
+  par_theta2 = theta2,
+  printLevel = 1
+)
 
-
-get_elasticities(blp_data=nevo_data, 
-                 share_info = shareObj, 
-                 theta_lin = theta1_price,
-                 variable = "price",
-                 products = c("cereal_1","cereal_4"),
-                 market = "market_2")
-
+get_elasticities(
+  blp_data = cereal_data,
+  share_info = shareObj,
+  theta_lin = theta1_price,
+  variable = "price",
+  products = c("cereal_1", "cereal_4"),
+  market = "market_2"
+)
 ```
 
 The value of the elasticity matrix in row $j$ and column $i$ for a variable $x$, gives the effect of a change in product $i$'s characteristic $x$ on the share of product $j$.
@@ -384,40 +406,43 @@ Further analysis like incorporating a supply side or performing a merger simulat
 In the following, you find an example of the contraction mapping and an evaluation of the GMM function at the starting guess:
 
 ```{r}
-
 delta_eval <- getDelta_wrap(
-  blp_data = nevo_data,
-  par_theta2 = theta_guesses,
+  blp_data = cereal_data,
+  par_theta2 = theta_guesses_cereal,
   printLevel = 4
 )
 
-productData$startingGuessesDelta[1:6]
+productData_cereal$startingGuessesDelta[1:6]
 delta_eval$delta[1:6]
 delta_eval$counter
 
 gmm <- gmm_obj_wrap(
-  blp_data = nevo_data,
-  par_theta2 = theta_guesses,
+  blp_data = cereal_data,
+  par_theta2 = theta_guesses_cereal,
   printLevel = 2
 )
 
 gmm$local_min
 ```
-Printed distances in the contraction mapping are maximum absolute distance between the current vector of mean utilities and the previous one.
+
+Printed distances in the contraction mapping are maximum absolute distances between the current vector of mean utilities and the previous one.
 
 
 For any $\theta_2$, you can compute predicted shares: 
 ```{r}
-shareObj <- getShareInfo(  blp_data=nevo_data,
-                           par_theta2 = theta_guesses,
-                           printLevel = 4)
+shareObj <- getShareInfo(
+  blp_data = cereal_data,
+  par_theta2 = theta_guesses_cereal,
+  printLevel = 4
+)
+
 shareObj$shares[1:6]
 ```
 
 The object contains a list of outputs that are useful for further economic analysis. For example, the list element `sij` contains share probabilities for every individual and needs to be given to calculate elasticities.
 
 
-The gradient contains two important building blocks as explained in the appendix of -@Nevo2001:
+The gradient contains two important building blocks as explained in the appendix of @Nevo2001:
 
 - $\frac{\partial s_{ijt}}{\partial \theta_2}$ , i.e. the derivative of individual $i$'s share of product $j$ in market $t$ with respect to non-linear parameters
 
@@ -427,24 +452,312 @@ Both are used to compute the jacobian and are easy to obtain with the package as
 
 ```{r}
 # market 2:
-derivatives1 <- dstdtheta_wrap(  blp_data=nevo_data,
-                                par_theta2 = theta_guesses,
-                                 market = "market_2")
-derivatives2 <- dstddelta_wrap(  blp_data=nevo_data,
-                                par_theta2 = theta_guesses,
-                                 market = "market_2")
+derivatives1 <- dstdtheta_wrap(
+  blp_data = cereal_data,
+  par_theta2 = theta_guesses_cereal,
+  market = "market_2"
+)
+derivatives2 <- dstddelta_wrap(
+  blp_data = cereal_data,
+  par_theta2 = theta_guesses_cereal,
+  market = "market_2"
+)
 
-jac_mkt2 <- -solve(derivatives2)%*%derivatives1
+jac_mkt2 <- -solve(derivatives2) %*% derivatives1
 
-jac_mkt2[1:5,1:4]
+jac_mkt2[1:5, 1:4]
 
 # all markets
-jacobian_nevo <- getJacobian_wrap(blp_data=nevo_data,
-                                 par_theta2 = theta_guesses,
-                                 printLevel = 2)
+jacobian_nevo <- getJacobian_wrap(
+  blp_data = cereal_data,
+  par_theta2 = theta_guesses_cereal,
+  printLevel = 2
+)
 
-jacobian_nevo[25:29,1:4] # compare to jac_mkt2
-
+jacobian_nevo[25:29, 1:4] # compare to jac_mkt2
 ```
+
+
+# Another Example: Merger Analysis with BLP's car data
+
+Analyzing a hypothetical merger is demonstrated by the car data of @BLP1995. In this case, the preparation of product data comprises the computation of instruments as a function of product characteristics of competitors' products (for details, check @BLP1995). This example is based on data and documentation of @KM2014. 
+
+```{r}
+# add owner matix to productData
+own_pre <- dummies_cars
+colnames(own_pre) <- paste0("company", 1:26)
+productData_cars <- cbind(productData_cars, own_pre)
+
+# construct instruments
+nobs <- nrow(productData_cars)
+X <- data.frame(
+  productData_cars$const, productData_cars$hpwt,
+  productData_cars$air, productData_cars$mpg, productData_cars$space
+)
+
+sum_other <- matrix(NA, nobs, ncol(X))
+sum_rival <- matrix(NA, nobs, ncol(X))
+sum_total <- matrix(NA, nobs, ncol(X))
+
+for (i in 1:nobs) {
+  other_ind <- productData_cars$firmid == productData_cars$firmid[i] &
+    productData_cars$cdid == productData_cars$cdid[i] &
+    productData_cars$id != productData_cars$id[i]
+  rival_ind <- productData_cars$firmid != productData_cars$firmid[i] &
+    productData_cars$cdid == productData_cars$cdid[i]
+  total_ind <- productData_cars$cdid == productData_cars$cdid[i]
+
+  sum_other[i, ] <- colSums(X[other_ind == 1, ])
+  sum_rival[i, ] <- colSums(X[rival_ind == 1, ])
+  sum_total[i, ] <- colSums(X[total_ind == 1, ])
+}
+
+colnames(sum_other) <- paste0("IV", 1:5)
+colnames(sum_rival) <- paste0("IV", 6:10)
+productData_cars <- cbind(productData_cars, sum_other, sum_rival)
+head(productData_cars)
+
+# To show similarities between implementations of other authors,
+# the variable "const" is used, although constants are considered by default.
+blps_model <- as.formula("share ~  0 + const + price + hpwt + air + mpg + space |
+                        0 + const + hpwt + air + mpg + space |
+                        0 + price + const + hpwt + air + mpg |
+                        0 + IV1 + IV2 + IV3 + IV4 + IV5 + IV6 + IV7 + IV8 + IV9 + IV10")
+
+car_data <- BLP_data(
+  model = blps_model,
+  market_identifier = "cdid",
+  product_identifier = "id",
+  additional_variables = paste0("company", 1:26), # check reordering works
+  productData = productData_cars,
+  blp_inner_tol = 1e-9,
+  blp_inner_maxit = 5000,
+  integration_method = "MLHS",
+  integration_accuracy = 50, integration_seed = 48
+)
+```
+
+In the next step, starting guesses for random coefficients are generated from a standard normal distribution. The estimation of the model works like before.
+
+```{r}
+set.seed(121)
+theta_guesses <- matrix(rnorm(5))
+rownames(theta_guesses) <- c("price", "const", "hpwt", "air", "mpg")
+colnames(theta_guesses) <- "unobs_sd"
+
+
+car_est <- estimateBLP(
+  blp_data = car_data,
+  par_theta2 = theta_guesses,
+  solver_method = "BFGS", solver_maxit = 1000, solver_reltol = 1e-6,
+  extremumCheck = FALSE, printLevel = 0
+)
+
+summary(car_est)
+```
+
+
+Next, all parameters that are required by the subsequent merger analysis are extracted. Note that all extracted data is based on the estimation object `car_est` or the data object `car_data` to maintain data consistency (for example, the order of data in `product_data_cars` might differ from `car_data`). Moreover, mean utilities are updated in `car_data` by the values in the estimation object `car_est`.
+
+ 
+```{r}
+## Pre-Merger data
+own_pre <- as.matrix(car_data$data$additional_data[, paste0("company", 1:26)])
+delta_pre <- car_est$delta
+theta1_price <- car_est$theta_lin["price", ]
+theta2_price <- car_est$theta_rc["unobs_sd*price"]
+theta2_all <- matrix(car_est$theta_rc)
+rownames(theta2_all) <- c("price", "const", "hpwt", "air", "mpg")
+colnames(theta2_all) <- "unobs_sd"
+
+## update mean utility in data ( always use update_BLP_data() to update data object to maintain consistent data )
+delta_data <- data.frame(
+  "id" = car_data$parameters$product_id,
+  "cdid" = car_data$parameters$market_id,
+  "delta" = delta_pre
+)
+car_data_updated <- update_BLP_data(
+  data_update = delta_data,
+  blp_data = car_data
+)
+```
+
+
+In the next step, an estimate for marginal costs $mc$ **before** the merger is computed. The following is based on the FOC of a Bertrand equilibrium with prices $p$ before the merger:
+
+$$ p^{pre} - \widehat{mc} = \Omega^{pre}(p^{pre})^{-1} \hat{s}(p^{pre}) $$
+$\Omega^{pre}(p^{pre})^{-1}$ is defined marketwise as the inverse of
+
+$$ \Omega^{pre}(p^{pre}) = 
+\pmatrix{
+-\frac{\partial s_{1}}{\partial p_{1}} (p^{pre}) \cdot D_{1,1}  & -\frac{\partial s_{2}}{\partial p_{1}} (p^{pre}) \cdot D_{1,2} & \cdots &  -\frac{\partial s_{j}}{\partial p_{1}} (p^{pre}) \cdot D_{1,j} & \cdots & -\frac{\partial s_{J}}{\partial p_{1}} (p^{pre}) \cdot D_{1,J}\\
+-\frac{\partial s_{1}}{\partial p_{2}} (p^{pre}) \cdot  D_{2,1} & -\frac{\partial s_{2}}{\partial p_{2}} (p^{pre}) \cdot  D_{2,2} & \cdots & -\frac{\partial s_{j}}{\partial p_{2}} (p^{pre}) \cdot D_{2,j} & \cdots & -\frac{\partial s_{J}}{\partial p_{2}} (p^{pre}) \cdot  D_{2,J}\\
+\vdots  & \vdots  & \ddots &   \vdots     &  \ddots      & \vdots\\
+-\frac{\partial s_{1}}{\partial p_{k}} (p^{pre}) \cdot D_{k,1}  & -\frac{\partial s_{2}}{\partial p_{k}} (p^{pre}) \cdot D_{k,2}  & \cdots & -\frac{\partial s_{j}}{\partial p_{k}} (p^{pre}) \cdot D_{k,j}  &  \cdots &
+-\frac{\partial s_{J}}{\partial p_{k}} (p^{pre}) \cdot D_{k,J}\\
+\vdots  & \vdots  & \ddots &   \vdots     &    \ddots    & \vdots\\
+-\frac{\partial s_{1}}{\partial p_{J}} (p^{pre}) \cdot  D_{J,1} & -\frac{\partial s_{2}}{\partial p_{J}} (p^{pre}) \cdot  D_{J,2} & \cdots & -\frac{\partial s_{j}}{\partial p_{J}} (p^{pre}) \cdot  D_{J,j}& \cdots & -\frac{\partial s_{J}}{\partial p_{J}} (p^{pre}) \cdot  D_{J,J}\\
+} 
+ $$
+ 
+
+with 
+$$D_{k,j} = 
+\begin{cases} 
+1 & \text{if products k and j are produced by the same firm} \\
+0 & \text{otherwise} \\
+\end{cases}$$
+
+Partial derivatives $\frac{\partial s_j}{\partial p_k}$ can be calculated based on the elasticity $\eta_{jk} = \frac{\partial s_j }{\partial p_k }\frac{ p_k}{ s_j}$, so
+ $$ \frac{\partial s_j}{\partial p_k} = \eta_{jk} \cdot \frac{ s_j}{ p_k} $$
+ 
+ 
+In the following code chunk, these objects in a market `i` are labeled as follows:
+
+- `own_prod_pre_i` ($D_{k,j}$) 
+- `elasticities_i` ($\eta_{jk}$)
+- `derivatives_i` ($\eta_{jk} \cdot \frac{ s_j}{ p_k}$)
+- `-solve(t(derivatives_i) * own_prod_pre_i)` ($\Omega^{pre}(p^{pre})^{-1}$)
+- `shareObj$shares` ($\hat{s}(p^{pre})$).
+ 
+
+```{r}
+## calculate sij
+shareObj <- getShareInfo(
+  blp_data = car_data_updated,
+  par_theta2 = theta2_all,
+  printLevel = 0
+)
+
+## computation of marginal costs
+market_id <- car_data$parameters$market_id
+nmkt <- length(unique(market_id))
+markups <- numeric(length(market_id))
+
+sh <- shareObj$shares
+prices_pre <- car_data$data$X_rand[, "price"]
+
+
+for (i in 1:nmkt) {
+  mkt_ind <- market_id == i
+  share_i <- sh[ mkt_ind ]
+  price_pre_i <- prices_pre[ mkt_ind ]
+  scalar_i <- matrix(1 / share_i) %*% matrix(price_pre_i, nrow = 1)
+  elasticities_i <- get_elasticities(
+    blp_data = car_data_updated,
+    share_info = shareObj,
+    theta_lin = theta1_price,
+    variable = "price",
+    market = i,
+    printLevel = 0
+  )
+
+  derivatives_i <- elasticities_i / scalar_i # partial derivatives of shares wrt price
+  own_pre_i <- own_pre[ mkt_ind, ]
+  own_prod_pre_i <- own_pre_i %*% t(own_pre_i) # if element (i,j) equals 1, that means that prod i and j are produced by same firm
+  markups[mkt_ind] <- c(-solve(t(derivatives_i) * own_prod_pre_i) %*% share_i)
+}
+marg_cost <- prices_pre - markups
+```
+
+
+
+The ownership matrix is adjusted to implement a hypothetical merger between Chrysler and GM: 
+```{r}
+# Merger between company 16 and 19 (i.e. GM and Chrysler)
+prices_post <- numeric(2217)
+own_post <- cbind(
+  own_pre[, 1:15],
+  own_pre[, 16] + own_pre[, 19],
+  own_pre[, 17:18],
+  own_pre[, 20:26]
+)
+```
+
+
+To analyze the effect on prices the FOC of the new equilibrium must be solved:
+$$ p^{post} - \widehat{mc} = \Omega^{post}(p^{post})^{-1} \hat{s}(p^{post}) $$
+
+The solution of this set of non-linear equations is obtained by the function `foc_bertrand_mkt` and the package `nleqslv`:
+
+```{r, eval = FALSE}
+foc_bertrand_mkt <- function(par, own_prod, blp_data, mkt, marg_cost, theta_lin, theta_rc) {
+  # argument par: candidate for post merger prices
+  # arguments own_prod, blp_data, mkt, marg_cost, theta_lin, theta_rc: see previous code blocks
+
+  # post merger updates: update the BLP_data object for market i
+  tmp <- data.frame(
+    "id" = blp_data$parameters$product_id,
+    "cdid" = blp_data$parameters$market_id,
+    "delta" = blp_data$data$delta,
+    "price" = blp_data$data$X_rand[, "price"]
+  )
+
+  market_ind <- blp_data$parameters$market_id == mkt
+  delta_old <- blp_data$data$delta
+  prices_pre <- blp_data$data$X_rand[, "price"]
+  tmp$price[ market_ind ] <- par
+  tmp$delta[ market_ind ] <- delta_old[market_ind] - prices_pre[market_ind] * theta_lin + par * theta_lin
+
+
+  new_blp_data <- update_BLP_data(
+    blp_data = blp_data,
+    data_update = tmp
+  )
+
+  ShareObj <- getShareInfo(
+    blp_data = new_blp_data,
+    par_theta2 = theta_rc,
+    printLevel = 0
+  )
+
+  implied_shares <- as.matrix(ShareObj$shares[market_ind])
+
+  elasticities_post_mkt <- get_elasticities(
+    blp_data = new_blp_data,
+    share_info = ShareObj,
+    theta_lin = theta_lin,
+    variable = "price",
+    market = mkt,
+    printLevel = 0
+  )
+
+  scalar_mkt <- matrix(1 / implied_shares) %*% matrix(par, nrow = 1)
+  derivatives_mkt <- elasticities_post_mkt / scalar_mkt
+
+  markups_post <- c(-solve(t(derivatives_mkt) * own_prod) %*% implied_shares)
+  differences <- par - marg_cost[market_ind] - markups_post
+
+  return(differences)
+}
+```
+
+Finally, the function is used to compute the new equilibrium:
+
+```{r,eval=FALSE}
+library(nleqslv) # to solve non linear first order conditions
+for (i in 1:nmkt) {
+  mkt_ind <- market_id == i
+  own_post_i <- own_post[ mkt_ind, ]
+  own_prod_post_i <- own_post_i %*% t(own_post_i)
+  price_pre_i <- prices_pre[ mkt_ind ]
+
+  solution <- nleqslv(
+    x = price_pre_i, foc_bertrand_mkt, # startingguesses: price_pre_i
+    own_prod = own_prod_post_i,
+    blp_data = car_data_updated,
+    mkt = i,
+    marg_cost = marg_cost,
+    theta_lin = theta1_price,
+    theta_rc = theta2_all
+  )
+
+  prices_post[ market_id == i ] <- solution$x
+}
+```
+
+
+
+
 
 # References
