@@ -104,12 +104,12 @@ estimateBLP <- function( blp_data,
   ## calc matrices
   Z <- blp_data$data$Z
   W <-  try( solve((t(Z) %*% Z)) )
-  if (class(W) == "try-error")
+  if (any(class(W) == "try-error"))
     stop("Problems with singular matrizes. This might be caused by (nearly) linear dependent regressors or weak instruments.")
   xzwz <- t(blp_data$data$X_lin) %*% Z %*% W %*% t(Z)
   xzwzx <- xzwz %*% blp_data$data$X_lin
   invxzwzx <- try( solve(xzwzx) )
-  if (class(invxzwzx) == "try-error")
+  if (any(class(invxzwzx) == "try-error"))
     stop("Problems with singular matrices. This might be caused by (nearly) linear dependent regressors or weak instruments.")
 
   blp_data$data$W <- W
@@ -232,7 +232,7 @@ estimateBLP <- function( blp_data,
     standardError <- "heteroskedastic"
   }
 
-  if (class(tmpSE) == "try-error")
+  if (any(class(tmpSE) == "try-error"))
     stop("Standard errors cannot be computed due to singular matrices.")
 
   if( standardError == "heteroskedastic") { # default
