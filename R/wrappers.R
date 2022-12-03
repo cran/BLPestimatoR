@@ -53,6 +53,7 @@ NULL
 #' derivatives1 <- dstdtheta_wrap(  blp_data=blp_data,
 #'                                   par_theta2 = theta2,
 #'                                  market = 2)
+#' @importFrom methods is
 #'
 #' @export
 dstdtheta_wrap <- function(  blp_data, par_theta2, market, printLevel = 1 ){
@@ -63,7 +64,7 @@ dstdtheta_wrap <- function(  blp_data, par_theta2, market, printLevel = 1 ){
   market <- as.character(market)
 
   ## check inouts
-  if(class(blp_data) != "blp_data") stop("Input has wrong class. Call BLP_data() first.")
+  if( !is(blp_data,"blp_data")) stop("Input has wrong class. Call BLP_data() first.")
   if( printLevel > 0) cat("Mean utility (delta) is used as provided in the BLP_data() function.")
   if( missing(market)) stop("Specify a valid market.")
   if( (length(market) != 1)  ) stop("Only one market can be specified.")
@@ -177,6 +178,8 @@ dstdtheta_wrap <- function(  blp_data, par_theta2, market, printLevel = 1 ){
 #' derivatives2 <- dstddelta_wrap(  blp_data=blp_data,
 #'                                   par_theta2 = theta2,
 #'                                  market = 2)
+#' @importFrom methods is
+#'
 #' @export
 dstddelta_wrap <- function(   blp_data, par_theta2, market, printLevel = 1 ){
   nobs <- blp_data$parameters$nobs
@@ -186,7 +189,7 @@ dstddelta_wrap <- function(   blp_data, par_theta2, market, printLevel = 1 ){
   market <- as.character(market)
 
   ## check inouts
-  if(class(blp_data) != "blp_data") stop("Input has wrong class. Call BLP_data() first.")
+  if( !is(blp_data,"blp_data")) stop("Input has wrong class. Call BLP_data() first.")
   if( printLevel > 0) cat("Mean utility (delta) is used as provided in the BLP_data() function.")
   if( missing(market)) stop("Specify a valid market.")
   if( (length(market) != 1)  ) stop("Only one market can be specified.")
@@ -293,6 +296,7 @@ dstddelta_wrap <- function(   blp_data, par_theta2, market, printLevel = 1 ){
 #'                       printLevel = 2)
 #' gmm$local_min
 #'
+#' @importFrom methods is
 #'
 #' @export
 gmm_obj_wrap <- function( blp_data, par_theta2, printLevel = 2){
@@ -300,7 +304,7 @@ gmm_obj_wrap <- function( blp_data, par_theta2, printLevel = 2){
   nobs <- blp_data$parameters$nobs
   K <- blp_data$parameters$K
   ## BLP_data class
-  if(class(blp_data) != "blp_data")
+  if( !is(blp_data,"blp_data"))
     stop("Input has wrong class. Call BLP_data() first.")
 
   ## calc matrices
@@ -444,7 +448,7 @@ getDelta_wrap <- function(blp_data, par_theta2, printLevel = 1){
   nobs <- blp_data$parameters$nobs
   K <- blp_data$parameters$K
   ## BLP_data class
-  if(class(blp_data) != "blp_data")
+  if( !is(blp_data,"blp_data"))
     stop("Input has wrong class. Call BLP_data() first.")
 
 
@@ -548,7 +552,7 @@ getShareInfo <- function(blp_data, par_theta2, printLevel = 1){
   nobs <- blp_data$parameters$nobs
   K <- blp_data$parameters$K
   ## BLP_data class
-  if(class(blp_data) != "blp_data")
+  if( !is(blp_data,"blp_data"))
     stop("Input has wrong class. Call BLP_data() first.")
 
   ## mean utility
@@ -678,7 +682,7 @@ getJacobian_wrap <- function( blp_data, par_theta2, printLevel = 1){
   nobs <- blp_data$parameters$nobs
   K <- blp_data$parameters$K
   ## BLP_data class
-  if(class(blp_data) != "blp_data")
+  if( !is(blp_data,"blp_data"))
     stop("Input has wrong class. Call BLP_data() first.")
 
   ## mean utility

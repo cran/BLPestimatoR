@@ -4,7 +4,9 @@
 \name{w_guesses_cereal}
 \alias{w_guesses_cereal}
 \title{Mean utility starting guesses for Nevo's cereal example.}
-\format{A numeric vector of 2256 values.}
+\format{
+A numeric vector of 2256 values.
+}
 \source{
 \url{https://dataverse.harvard.edu/file.xhtml?persistentId=doi:10.7910/DVN/26803/SOF9FW&version=1.0}
 }

@@ -4,11 +4,13 @@
 \name{originalDraws_cereal}
 \alias{originalDraws_cereal}
 \title{Draws for unobserved heterogeneity in Nevo's cereal example.}
-\format{Each list entry contains draws (unobserved heterogeneity) for a random coefficient.
+\format{
+Each list entry contains draws (unobserved heterogeneity) for a random coefficient.
 \describe{
   \item{cdid}{market identifier,}
   \item{draws_}{20 draws differing across markets.}
-}}
+}
+}
 \source{
 \url{https://dataverse.harvard.edu/file.xhtml?persistentId=doi:10.7910/DVN/26803/SOF9FW&version=1.0}
 }

@@ -4,7 +4,8 @@
 \name{productData_cereal}
 \alias{productData_cereal}
 \title{Product data of Nevo's cereal example.}
-\format{A data frame with product data of 24 cereals in each of 94 markets.
+\format{
+A data frame with product data of 24 cereals in each of 94 markets.
 \describe{
   \item{share}{cereals market share,}
   \item{price}{cereals price,}
@@ -34,7 +35,8 @@
  \item{IV18}{18. instrument,}
  \item{IV19}{19. instrument,}
  \item{IV20}{20. instrument}
-   }}
+   }
+}
 \source{
 \url{https://dataverse.harvard.edu/file.xhtml?persistentId=doi:10.7910/DVN/26803/SOF9FW&version=1.0}
 }

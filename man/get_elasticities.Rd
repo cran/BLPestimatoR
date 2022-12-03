@@ -4,8 +4,15 @@
 \alias{get_elasticities}
 \title{Calculates elasticities for a given variable and market.}
 \usage{
-get_elasticities(blp_data, share_info, theta_lin, variable, products,
-  market, printLevel = 1)
+get_elasticities(
+  blp_data,
+  share_info,
+  theta_lin,
+  variable,
+  products,
+  market,
+  printLevel = 1
+)
 }
 \arguments{
 \item{blp_data}{data object created by the function \code{BLP_data},}

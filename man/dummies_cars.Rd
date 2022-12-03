@@ -4,10 +4,12 @@
 \name{dummies_cars}
 \alias{dummies_cars}
 \title{Ownership matrix in BLP's car example.}
-\format{Dummy variables.
+\format{
+Dummy variables.
 \describe{
   \item{column i}{1, if product in row j is produced by firm i, 0 otherwise}
-}}
+}
+}
 \source{
 \url{https://dataverse.harvard.edu/file.xhtml?persistentId=doi:10.7910/DVN/26803/SOF9FW&version=1.0}
 }

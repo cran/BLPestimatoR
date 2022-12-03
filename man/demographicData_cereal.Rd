@@ -4,11 +4,13 @@
 \name{demographicData_cereal}
 \alias{demographicData_cereal}
 \title{Draws for observed heterogeneity in Nevo's cereal example.}
-\format{Draws for observed heterogeneity for each demographic.
+\format{
+Draws for observed heterogeneity for each demographic.
 \describe{
   \item{cdid}{market identifier,}
   \item{draws_}{20 draws differing across markets.}
-}}
+}
+}
 \source{
 \url{https://dataverse.harvard.edu/file.xhtml?persistentId=doi:10.7910/DVN/26803/SOF9FW&version=1.0}
 }

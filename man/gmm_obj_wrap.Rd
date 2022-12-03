@@ -68,5 +68,4 @@ gmm <- gmm_obj_wrap(  blp_data=blp_data,
                       printLevel = 2)
 gmm$local_min
 
-
 }

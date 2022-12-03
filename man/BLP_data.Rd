@@ -4,11 +4,23 @@
 \alias{BLP_data}
 \title{Prepares data and parameters related to the BLP algorithm for estimation.}
 \usage{
-BLP_data(model, market_identifier, product_identifier, par_delta,
-  group_structure = NULL, additional_variables = NULL, productData,
-  demographic_draws, integration_accuracy, integration_method,
-  integration_draws, integration_weights, integration_seed,
-  blp_inner_tol = 1e-09, blp_inner_maxit = 10000)
+BLP_data(
+  model,
+  market_identifier,
+  product_identifier,
+  par_delta,
+  group_structure = NULL,
+  additional_variables = NULL,
+  productData,
+  demographic_draws,
+  integration_accuracy,
+  integration_method,
+  integration_draws,
+  integration_weights,
+  integration_seed,
+  blp_inner_tol = 1e-09,
+  blp_inner_maxit = 10000
+)
 }
 \arguments{
 \item{model}{the model to be estimated in R's formula syntax,}

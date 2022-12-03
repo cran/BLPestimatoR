@@ -82,13 +82,15 @@ NULL
 #'                  products = c("4","20"),
 #'                  market = 1)
 #'
+#' @importFrom methods is
+#'
 #' @export
 get_elasticities <- function( blp_data, share_info, theta_lin, variable, products , market, printLevel = 1){
 
-  if(class(blp_data) != "blp_data")
+  if( !is(blp_data,"blp_data"))
     stop("blp_data has wrong class. Call BLP_data() first.")
 
-  if(class(share_info) != "shareInfo")
+  if( !is(share_info,"shareInfo"))
     stop("share_info has wrong class. Call getShareInfo() first.")
 
   if( missing(variable ))

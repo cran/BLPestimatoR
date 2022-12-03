@@ -5,11 +5,12 @@
 #' @importFrom stats runif
 #' @importFrom stats pchisq
 #' @importFrom stats na.omit
-#' 
+#' @importFrom methods is
+#'
 #' @export
 summary.blp_est <- function( object , ... ){
 
-  if( class( object ) != "blp_est" )
+  if( !is(object,"blp_est"))
     stop("Argument is not of class blp.")
 
   ans <- object
@@ -64,7 +65,7 @@ summary.blp_est <- function( object , ... ){
 #' @export
 print.blpSummary <- function( x, ... ){
 
-  if( class(x) != "blpSummary" )
+  if( !is(x,"blpSummary"))
     stop("Argument is not of class *blpSummary* .")
 
   ##

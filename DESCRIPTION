@@ -1,20 +1,20 @@
 Package: BLPestimatoR
 Type: Package
 Title: Performs a BLP Demand Estimation
-Version: 0.3.2
+Version: 0.3.4
 Author: Daniel Brunner (aut), Constantin Weiser (ctr), Andre Romahn (ctr)
 Maintainer: Daniel Brunner <daniel.brunner@hhu.de>
 Description: Provides the estimation algorithm to perform the demand estimation described in Berry, Levinsohn and Pakes (1995) <DOI:10.2307/2171802> . The routine uses analytic gradients and offers a large number of implemented integration methods and optimization routines.
 License: GPL-3
 LazyData: TRUE
-Imports: Rcpp (>= 0.11.0), mvQuad, numDeriv, randtoolbox, Formula,
-        stats , Matrix
+Depends: R (>= 4.2.0)
+Imports: Rcpp (>= 1.0.9), mvQuad, numDeriv, randtoolbox, Formula, stats
+        , Matrix, methods
 LinkingTo: Rcpp, RcppArmadillo
-RoxygenNote: 6.1.1
+RoxygenNote: 7.2.2
 NeedsCompilation: yes
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
-Packaged: 2019-12-11 11:48:23 UTC; brunned
-Depends: R (>= 3.5.0)
+Packaged: 2022-12-03 15:26:36 UTC; brunned
 Repository: CRAN
-Date/Publication: 2019-12-11 14:20:16 UTC
+Date/Publication: 2022-12-03 15:52:31 UTC

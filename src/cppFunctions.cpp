@@ -1,5 +1,4 @@
 #include <RcppArmadillo.h>
-// [[Rcpp::depends(RcppArmadillo)]]
 // Includes/namespaces
 #include <iostream>
 #include <string>
@@ -168,7 +167,13 @@ List getDelta( const NumericMatrix &theta2,
   int startpos;
 
   // input check delta:
-  if( any( is_na( deltaOld ) ) | any( is_nan( deltaOld ) ) ) {
+
+  if( any( is_na( deltaOld) ) )   {
+    for(int i = 0; i < nobs; ++i) {
+      expDeltaStart[i] = 1;
+    }
+  }
+  if( any( is_nan( deltaOld) ) )   {
     for(int i = 0; i < nobs; ++i) {
       expDeltaStart[i] = 1;
     }

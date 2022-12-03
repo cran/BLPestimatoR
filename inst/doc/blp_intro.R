@@ -1,23 +1,23 @@
-## ----setup, include = FALSE----------------------------------------------
+## ----setup, include = FALSE---------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(BLPestimatoR)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 nevos_model <- as.formula("share ~  price + productdummy |
     0+ productdummy |
     price + sugar + mushy |
     0+ IV1 + IV2 + IV3 + IV4 + IV5 + IV6 + IV7 + IV8 + IV9 + IV10 + 
     IV11 + IV12 + IV13 + IV14 + IV15 + IV16 + IV17 + IV18 + IV19 + IV20")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 head(productData_cereal)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 demographicData_cereal$income[1:4, 1:5]
 
 demographicData_cereal$incomesq[1:4, 1:5]
@@ -26,7 +26,7 @@ demographicData_cereal$age[1:4, 1:5]
 
 demographicData_cereal$child[1:4, 1:5]
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 originalDraws_cereal$constant[1:4, 1:5]
 
 # renaming constants:
@@ -38,7 +38,7 @@ originalDraws_cereal$sugar[1:4, 1:5]
 
 originalDraws_cereal$mushy[1:4, 1:5]
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 productData_cereal$startingGuessesDelta <- c(log(w_guesses_cereal)) # include orig. draws in the product data
 
 cereal_data <- BLP_data(
@@ -53,7 +53,7 @@ cereal_data <- BLP_data(
   integration_weights = rep(1 / 20, 20)
 )
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # before:
 theta_guesses_cereal
 theta_guesses_cereal[theta_guesses_cereal == 0] <- NA
@@ -63,7 +63,7 @@ rownames(theta_guesses_cereal) <- c("(Intercept)", "price", "sugar", "mushy")
 # correctly named:
 theta_guesses_cereal
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 cereal_est <- estimateBLP(
   blp_data = cereal_data,
   par_theta2 = theta_guesses_cereal,
@@ -75,7 +75,7 @@ cereal_est <- estimateBLP(
 
 summary(cereal_est)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 cereal_data2 <- BLP_data(
   model = nevos_model,
   market_identifier = "cdid",
@@ -90,7 +90,7 @@ cereal_est2 <- estimateBLP(blp_data = cereal_data2, printLevel = 1)
 
 summary(cereal_est2)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # extract parameters from output
 theta1_price <- cereal_est$theta_lin["price", ]
 theta2 <- matrix(NA, nrow = 4, ncol = 5)
@@ -126,7 +126,7 @@ get_elasticities(
   market = "market_2"
 )
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 delta_eval <- getDelta_wrap(
   blp_data = cereal_data,
   par_theta2 = theta_guesses_cereal,
@@ -145,7 +145,7 @@ gmm <- gmm_obj_wrap(
 
 gmm$local_min
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 shareObj <- getShareInfo(
   blp_data = cereal_data,
   par_theta2 = theta_guesses_cereal,
@@ -154,7 +154,7 @@ shareObj <- getShareInfo(
 
 shareObj$shares[1:6]
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # market 2:
 derivatives1 <- dstdtheta_wrap(
   blp_data = cereal_data,
@@ -180,7 +180,7 @@ jacobian_nevo <- getJacobian_wrap(
 
 jacobian_nevo[25:29, 1:4] # compare to jac_mkt2
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # add owner matix to productData
 own_pre <- dummies_cars
 colnames(own_pre) <- paste0("company", 1:26)
@@ -234,7 +234,7 @@ car_data <- BLP_data(
   integration_accuracy = 50, integration_seed = 48
 )
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 set.seed(121)
 theta_guesses <- matrix(rnorm(5))
 rownames(theta_guesses) <- c("price", "const", "hpwt", "air", "mpg")
@@ -250,7 +250,7 @@ car_est <- estimateBLP(
 
 summary(car_est)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ## Pre-Merger data
 own_pre <- as.matrix(car_data$data$additional_data[, paste0("company", 1:26)])
 delta_pre <- car_est$delta
@@ -271,7 +271,7 @@ car_data_updated <- update_BLP_data(
   blp_data = car_data
 )
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ## calculate sij
 shareObj <- getShareInfo(
   blp_data = car_data_updated,
@@ -309,7 +309,7 @@ for (i in 1:nmkt) {
 }
 marg_cost <- prices_pre - markups
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # Merger between company 16 and 19 (i.e. GM and Chrysler)
 prices_post <- numeric(2217)
 own_post <- cbind(
@@ -319,7 +319,7 @@ own_post <- cbind(
   own_pre[, 20:26]
 )
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval = FALSE------------------------------------------------------------
 #  foc_bertrand_mkt <- function(par, own_prod, blp_data, mkt, marg_cost, theta_lin, theta_rc) {
 #    # argument par: candidate for post merger prices
 #    # arguments own_prod, blp_data, mkt, marg_cost, theta_lin, theta_rc: see previous code blocks
@@ -370,7 +370,7 @@ own_post <- cbind(
 #    return(differences)
 #  }
 
-## ----eval=FALSE----------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  library(nleqslv) # to solve non linear first order conditions
 #  for (i in 1:nmkt) {
 #    mkt_ind <- market_id == i

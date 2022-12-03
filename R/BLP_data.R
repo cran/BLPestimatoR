@@ -441,10 +441,10 @@ update_BLP_data <- function(data_update,
                             blp_data){
 
   ## BLP_data class
-  if(class(blp_data) != "blp_data")
+  if( !is(blp_data,"blp_data"))
     stop("Input has wrong class. Call BLP_data() first.")
 
-  if(class(data_update) != "data.frame")
+  if( !is(data_update,"data.frame"))
     stop("data_update must be a data.frame.")
 
   product_id_varname_old <- blp_data$parameters$product_id_varname

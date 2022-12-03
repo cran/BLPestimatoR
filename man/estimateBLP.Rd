@@ -4,10 +4,17 @@
 \alias{estimateBLP}
 \title{Performs a BLP demand estimation.}
 \usage{
-estimateBLP(blp_data, par_theta2, solver_method = "BFGS",
-  solver_maxit = 10000, solver_reltol = 1e-06,
-  standardError = "heteroskedastic", extremumCheck = FALSE,
-  printLevel = 2, ...)
+estimateBLP(
+  blp_data,
+  par_theta2,
+  solver_method = "BFGS",
+  solver_maxit = 10000,
+  solver_reltol = 1e-06,
+  standardError = "heteroskedastic",
+  extremumCheck = FALSE,
+  printLevel = 2,
+  ...
+)
 }
 \arguments{
 \item{blp_data}{data object created by the function \code{BLP_data},}

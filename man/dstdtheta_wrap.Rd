@@ -64,5 +64,4 @@ colnames(theta2) <- "unobs_sd"
 derivatives1 <- dstdtheta_wrap(  blp_data=blp_data,
                                   par_theta2 = theta2,
                                  market = 2)
-
 }

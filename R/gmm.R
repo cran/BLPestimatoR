@@ -23,11 +23,12 @@ NULL
 #' @importFrom mvQuad getNodes
 #' @importFrom numDeriv hessian
 #' @importFrom randtoolbox halton
+#' @importFrom methods is
 #'
 gmm_obj <- function(par_theta2 , indices, blp_results, blp_data,
                     printLevel){
 
-  if(class(blp_data) != "blp_data")
+  if( !is(blp_data,"blp_data"))
     stop("Input has wrong class. Call BLP_data() first.")
 
 
@@ -68,7 +69,7 @@ gmm_obj <- function(par_theta2 , indices, blp_results, blp_data,
 
   if (delta_has_na) {
     gradient <- rep(Inf, length(par_theta2))
-    f <- Inf
+    f_out <- Inf
   } else {
     #save delta as start solution for the next run,
     #only if contraction mapping converged in the previous step:
@@ -77,7 +78,7 @@ gmm_obj <- function(par_theta2 , indices, blp_results, blp_data,
     bet <- blp_data$data$invxzwzx %*% (blp_data$data$xzwz %*% delta)
     xi <- delta - blp_data$data$X_lin %*% bet
     tmp2 <- t(xi) %*% blp_data$data$Z
-    f <- c(tmp2 %*% blp_data$data$W %*% t(tmp2))
+    f_out <- c(tmp2 %*% blp_data$data$W %*% t(tmp2))
 
     ## Gradient
     sij <- matrix(NA_real_, nrow = blp_data$parameters$nobs ,
@@ -93,7 +94,7 @@ gmm_obj <- function(par_theta2 , indices, blp_results, blp_data,
     if (any(is.na(jacobian))) {
       if (printLevel > 0) { cat("\t gradient contains Na's --> objective value and gradient replaced by Inf \n")}
       gradient <- rep(Inf, length(par_theta2))
-      f <- Inf
+      f_out <- Inf
     }else{
       gradient <- 2 * t(jacobian) %*% blp_data$data$Z %*% blp_data$data$W %*%
         t(blp_data$data$Z) %*% xi
@@ -104,7 +105,7 @@ gmm_obj <- function(par_theta2 , indices, blp_results, blp_data,
 
 
   if (printLevel >= 1) {
-    cat("gmm objective:", round(f, 4))
+    cat("gmm objective:", round(f_out, 4))
     if ( delta_has_na )  cat(" [delta contains NaN's] ")
     cat("\n")
   }
@@ -130,7 +131,7 @@ gmm_obj <- function(par_theta2 , indices, blp_results, blp_data,
   blp_results$sij <- sij
   if(tmp$negShares==TRUE) blp_results$negShares <- TRUE
 
-  return(f)
+  return(f_out)
 }
 
 

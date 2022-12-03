@@ -6,6 +6,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // getSij
 NumericMatrix getSij(const NumericMatrix& expmu, const NumericVector& expdelta, const IntegerVector& cdindex);
 RcppExport SEXP _BLPestimatoR_getSij(SEXP expmuSEXP, SEXP expdeltaSEXP, SEXP cdindexSEXP) {

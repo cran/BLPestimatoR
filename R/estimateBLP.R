@@ -82,6 +82,7 @@ NULL
 #' @importFrom numDeriv hessian
 #' @importFrom randtoolbox halton
 #' @importFrom Matrix Diagonal
+#' @importFrom methods is
 #'
 #' @export
 estimateBLP <- function( blp_data,
@@ -97,7 +98,7 @@ estimateBLP <- function( blp_data,
   nobs <- blp_data$parameters$nobs
   K <- blp_data$parameters$K
   ## BLP_data class
-  if(class(blp_data) != "blp_data")
+  if( !is(blp_data,"blp_data"))
     stop("Input has wrong class. Call BLP_data() first.")
 
 
@@ -170,6 +171,7 @@ estimateBLP <- function( blp_data,
                blp_data=blp_data,
                printLevel=printLevel,
                ... )
+
 
   solverMessage<- if( res$convergence==0 ) "Successful convergence" else paste("See error code (optim package)", res$convergence )
   outer_it_out <-  res$counts[1]

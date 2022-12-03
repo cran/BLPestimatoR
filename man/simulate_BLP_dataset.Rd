@@ -4,10 +4,19 @@
 \alias{simulate_BLP_dataset}
 \title{This function creates a simulated BLP dataset.}
 \usage{
-simulate_BLP_dataset(nmkt, nbrn, Xlin, Xexo, Xrandom, instruments,
-  true.parameters = list(), price.endogeneity = list(mean.xi = -2,
-  mean.eita = 0, cov = cbind(c(1, 0.7), c(0.7, 1))), printlevel = 1,
-  seed)
+simulate_BLP_dataset(
+  nmkt,
+  nbrn,
+  Xlin,
+  Xexo,
+  Xrandom,
+  instruments,
+  true.parameters = list(),
+  price.endogeneity = list(mean.xi = -2, mean.eita = 0, cov = cbind(c(1, 0.7), c(0.7,
+    1))),
+  printlevel = 1,
+  seed
+)
 }
 \arguments{
 \item{nmkt}{number of markets}
